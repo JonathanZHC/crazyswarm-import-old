@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<launch>
+
+  <!--Simulator-->
+	<node name="simulator" pkg="crazyswarm" type="simulator.py" output="screen" required="True">
+        <param name="model" value="cf23" type="str" />
+  </node>
+
+</launch>

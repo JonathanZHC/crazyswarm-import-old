@@ -1,0 +1,20 @@
+.vscode/
+ros_ws/build/
+ros_ws/devel/
+ros_ws/src/CMakeLists.txt
+.DS_Store
+*.pyc
+*~
+*.mexa64
+# james's symlinks :)
+cfs.yaml
+firm
+client
+launch # ignore launch symlink
+!*ros_ws/*launch* # don't ignore folders with launch in the name
+# DSL
+ros_ws/src/crazyswarm/scripts/traj_script/logs/
+# Weights and biases
+wandb/
+# C++ build files
+*.o
