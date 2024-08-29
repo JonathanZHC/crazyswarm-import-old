@@ -398,10 +398,10 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
 
    double* W_0 = calloc(NY0*NY0, sizeof(double));
     // change only the non-zero elements:
-    W_0[0+(NY0) * 0] = 0.1;
-    W_0[1+(NY0) * 1] = 0.1;
-    W_0[2+(NY0) * 2] = 0.1;
-    W_0[3+(NY0) * 3] = 0.1;
+    W_0[0+(NY0) * 0] = 1;
+    W_0[1+(NY0) * 1] = 1;
+    W_0[2+(NY0) * 2] = 1;
+    W_0[3+(NY0) * 3] = 1;
     W_0[4+(NY0) * 4] = 0.1;
     W_0[5+(NY0) * 5] = 0.1;
     W_0[6+(NY0) * 6] = 0.1;
@@ -434,10 +434,10 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     free(yref);
     double* W = calloc(NY*NY, sizeof(double));
     // change only the non-zero elements:
-    W[0+(NY) * 0] = 0.1;
-    W[1+(NY) * 1] = 0.1;
-    W[2+(NY) * 2] = 0.1;
-    W[3+(NY) * 3] = 0.1;
+    W[0+(NY) * 0] = 1;
+    W[1+(NY) * 1] = 1;
+    W[2+(NY) * 2] = 1;
+    W[3+(NY) * 3] = 1;
     W[4+(NY) * 4] = 0.1;
     W[5+(NY) * 5] = 0.1;
     W[6+(NY) * 6] = 0.1;
@@ -481,10 +481,10 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
 
     double* W_e = calloc(NYN*NYN, sizeof(double));
     // change only the non-zero elements:
-    W_e[0+(NYN) * 0] = 0.1;
-    W_e[1+(NYN) * 1] = 0.1;
-    W_e[2+(NYN) * 2] = 0.1;
-    W_e[3+(NYN) * 3] = 0.1;
+    W_e[0+(NYN) * 0] = 1;
+    W_e[1+(NYN) * 1] = 1;
+    W_e[2+(NYN) * 2] = 1;
+    W_e[3+(NYN) * 3] = 1;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, N, "W", W_e);
     free(W_e);
     double* Vx_e = calloc(NYN*NX, sizeof(double));

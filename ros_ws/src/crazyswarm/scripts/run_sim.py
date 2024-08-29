@@ -57,8 +57,8 @@ if __name__ == "__main__":
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
     num_cycles = 2.0  # Number of cycles to complete
-    scaling = 0.4  # Trajectory scaling
-    traj_length = 12.0  # Trajectory length in seconds
+    scaling = 0.75  # Trajectory scaling
+    total_time = 10.0  # Trajectory length in seconds
     sample_time = 0.01  # Sampling time, only for plotting
     traj_plane = "xyz"  # Trajectory plane
     mode = '3D' # 2D or 3D
@@ -86,7 +86,7 @@ if __name__ == "__main__":
         traj = TrajectoryGenerator2DPeriodicMotion(traj_type=traj_type,
                                                     num_cycles=num_cycles,
                                                     scaling=scaling,
-                                                    traj_length=traj_length,
+                                                    traj_length=total_time,
                                                     sample_time=sample_time,
                                                     traj_plane=traj_plane)
 
@@ -125,7 +125,7 @@ if __name__ == "__main__":
         traj = TrajectoryGenerator3DPeriodicMotion(traj_type=traj_type,
                                                     num_cycles=num_cycles,
                                                     scaling=scaling,
-                                                    traj_length=traj_length,
+                                                    traj_length=total_time,
                                                     sample_time=sample_time,
                                                     traj_plane=traj_plane)
 
@@ -135,7 +135,7 @@ if __name__ == "__main__":
                        'traj_type': traj_type,
                        'num_cycles': num_cycles,
                        'scaling': scaling,
-                       'traj_length': traj_length,
+                       'traj_length': total_time,
                        'sample_time': sample_time,
                        'traj_plane': traj_plane,
                        'i_range': i_range,

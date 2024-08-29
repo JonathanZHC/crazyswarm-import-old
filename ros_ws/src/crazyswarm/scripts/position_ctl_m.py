@@ -233,17 +233,18 @@ class PositionController:
         thrust = (-self.b_coeff + np.sqrt(self.b_coeff**2 - 4 * self.a_coeff * (self.c_coeff - pwm_scaled))) / (2 * self.a_coeff)
         return thrust
 
-    def mpc_controller(self, current_state, target_state):
+    def mpc_controller(self, current_state, target_state_arr):
         # Set initial state
         self.solver_obj.solver.set(0, "lbx", current_state)
         self.solver_obj.solver.set(0, "ubx", current_state)
     
         # Set tracking reference
-        yref = np.zeros(self.MPC_dim_output + self.MPC_dim_input)
-        yref[:self.MPC_dim_output] = target_state
-        self.solver_obj.solver.set(self.MPC_N, "yref", target_state)
+        yref = np.zeros((self.MPC_N, self.MPC_dim_output + self.MPC_dim_input))
+        yref[:, :self.MPC_dim_output] = target_state_arr[:self.MPC_N, :]
         for i in range(self.MPC_N):
-            self.solver_obj.solver.set(i, "yref", yref)
+            self.solver_obj.solver.set(i, "yref", yref[i, :])
+        # last yef has different shape (dim = 4), must be initialized individually
+        self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, :]) 
         
         # Warm starting: initialize a policy for SQP
         for i in range(self.MPC_N):
@@ -275,7 +276,7 @@ class PositionController:
 
         return u_opt
 
-    def compute_action(self, measured_pos, measured_rpy, measured_vel, desired_pos, desired_roll):
+    def compute_action(self, measured_pos, measured_rpy, measured_vel, desired_pos_arr, desired_vel_arr, desired_roll_arr):
         """Compute the thrust and euler angles for the drone to reach the desired position.
         
         Args:
@@ -290,16 +291,11 @@ class PositionController:
             euler_desired (np.array): desired euler angles
         """
 
-        rospy.loginfo("measured_rpy: ")
-        rospy.loginfo(measured_rpy)
-        rospy.loginfo("desired_roll ")
-        rospy.loginfo(desired_roll)
-
         current_state = np.hstack((measured_pos, measured_vel, measured_rpy))
-        target_output = np.hstack((desired_pos, desired_roll))
+        target_output_arr = np.hstack((desired_pos_arr, desired_roll_arr))
 
         # Call API function for Acados to solve MPC problem on current time step
-        input_desired = self.mpc_controller(current_state, target_output)
+        input_desired = self.mpc_controller(current_state, target_output_arr)
 
         current_thrust = input_desired[0]
         euler_desired = input_desired[1:]

@@ -276,7 +276,7 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_c_dot = self.scaling * 0.1
         '''
 
-        
+        '''
         # curve 2
         coords_a = self.scaling * np.sin(self.traj_freq * t)
         coords_b = self.scaling * np.cos(self.traj_freq * t)
@@ -285,9 +285,9 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_a_dot = self.scaling * self.traj_freq * np.cos(self.traj_freq * t)
         coords_b_dot = - self.scaling * self.traj_freq * np.sin(self.traj_freq * t)
         coords_c_dot = self.scaling * self.traj_freq * np.cos(2 * self.traj_freq * t)
-        
-
         '''
+
+        
         # curve 3
         coords_a = self.scaling * np.sin(self.traj_freq * t) * np.sin(self.traj_freq * t)
         coords_b = self.scaling * np.cos(self.traj_freq * t)
@@ -296,7 +296,7 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_a_dot = self.scaling * self.traj_freq * np.sin(2 * self.traj_freq * t)
         coords_b_dot = - self.scaling * self.traj_freq * np.sin(self.traj_freq * t)
         coords_c_dot = self.scaling * self.traj_freq * np.cos(2 * self.traj_freq * t)
-        '''
+        
 
         '''
         # curve 4
