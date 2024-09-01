@@ -10,7 +10,12 @@
         "constr_type_0": "BGH",
         "constr_type_e": "BGH",
         "has_x0": true,
-        "idxbu": [],
+        "idxbu": [
+            0,
+            1,
+            2,
+            3
+        ],
         "idxbx": [
             0,
             1,
@@ -56,7 +61,12 @@
         "idxsphi": [],
         "idxsphi_0": [],
         "idxsphi_e": [],
-        "lbu": [],
+        "lbu": [
+            0.13525931330136065,
+            -1.57,
+            -1.57,
+            -1.57
+        ],
         "lbx": [
             -3.0,
             -3.0,
@@ -99,7 +109,12 @@
         "lsphi": [],
         "lsphi_0": [],
         "lsphi_e": [],
-        "ubu": [],
+        "ubu": [
+            0.6373621798607251,
+            1.57,
+            1.57,
+            1.57
+        ],
         "ubx": [
             3.0,
             3.0,
@@ -719,7 +734,7 @@
     ],
     "dims": {
         "N": 60,
-        "nbu": 0,
+        "nbu": 4,
         "nbx": 9,
         "nbx_0": 9,
         "nbx_e": 0,
@@ -865,10 +880,10 @@
         "nlp_solver_max_iter": 500,
         "nlp_solver_step_length": 1.0,
         "nlp_solver_tol_comp": 1e-06,
-        "nlp_solver_tol_eq": 1e-06,
+        "nlp_solver_tol_eq": 0.001,
         "nlp_solver_tol_ineq": 1e-06,
         "nlp_solver_tol_min_step_norm": 0.0,
-        "nlp_solver_tol_stat": 1e-06,
+        "nlp_solver_tol_stat": 0.001,
         "nlp_solver_type": "SQP_RTI",
         "nlp_solver_warm_start_first_qp": false,
         "num_threads_in_batch_solve": 1,

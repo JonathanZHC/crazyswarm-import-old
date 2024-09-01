@@ -5,6 +5,8 @@ from scipy import interpolate
 from scipy.linalg import expm
 from scipy.signal import butter, filtfilt
 
+from helper import pwm2thrust, thrust2pwm
+
 from position_ctl_m import PositionController
 from utils import DataVarIndex, Status, load_data, get_file_path_from_run, var_bounds, GRAVITY
 from plot_data import Plotter
@@ -69,7 +71,7 @@ class DataSmoother:
 
             # Convert the thrust from pwm to force
             if index == DataVarIndex.CMD_THRUST:
-                data = self.pos_control.pwm2thrust(data)
+                data = pwm2thrust(data)
 
             # use low-pass filter 
             N = 4

@@ -6,6 +6,8 @@ import rospy
 import json
 import os
 
+from helper import pwm2thrust, thrust2pwm
+
 #from helper import rotation2euler, euler2rotation, clamp
 from casadi import SX, vertcat, sin, cos
 from acados_template import AcadosOcp, AcadosOcpSolver, AcadosModel
@@ -121,8 +123,8 @@ class MPCSolver:
 
         # Define other hyperparameters in SQP solving
         ocp.solver_options.nlp_solver_max_iter = 500
-        #ocp.solver_options.nlp_solver_tol_stat = 1E-3
-        #ocp.solver_options.nlp_solver_tol_eq = 1E-3
+        ocp.solver_options.nlp_solver_tol_stat = 1E-3
+        ocp.solver_options.nlp_solver_tol_eq = 1E-3
 
         '''Cost function setting'''
         # Set type of cost function
@@ -139,6 +141,7 @@ class MPCSolver:
         ocp.cost.W = W # Stage cost 
         ocp.cost.W_e = np.eye(model_obj.dim_output) * Q  # Terminal cost 
 
+        '''Transform variables from OCP to QP form'''
         # Initialize output function for stage cost
         # Define output matrix
         Vx = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_state))
@@ -159,13 +162,19 @@ class MPCSolver:
 
         '''Constraints setting'''
         # Input Constraints
-        #ocp.constraints.idxbu = np.array(range(model_obj.dim_input))
-        #ocp.constraints.lbu = np.array([-1.0])
-        #ocp.constraints.ubu = np.array([1.0])
+        thrust_min = pwm2thrust(params['quad']['pwm_min'])
+        thrust_max = pwm2thrust(params['quad']['pwm_max'])
+        lbu = np.hstack((np.array(thrust_min), np.array(params['MPC_problem']['lbu_euler'])))
+        ubu = np.hstack((np.array(thrust_max), np.array(params['MPC_problem']['ubu_euler'])))
+        ocp.constraints.idxbu = np.array(range(model_obj.dim_input))
+        ocp.constraints.lbu = lbu 
+        ocp.constraints.ubu = ubu
+
         # State Constraints
         ocp.constraints.idxbx = np.array(range(model_obj.dim_state)) # must be defined before upper/lower limit
         ocp.constraints.lbx = np.array(params['MPC_problem']['lbx'])
         ocp.constraints.ubx = np.array(params['MPC_problem']['ubx'])
+
         # Define initial state for problem solving
         ocp.constraints.x0 = np.array(params['MPC_problem']['x0'])
         
@@ -192,13 +201,6 @@ class PositionController:
             self.controller_params = quad.controller
 
         self.i_error = 0
-
-        # abc-formula coefficients for thrust to pwm conversion
-        # pwm = a * thrust^2 + b * thrust + c
-        self.a_coeff = -1.1264
-        self.b_coeff = 2.2541
-        self.c_coeff = 0.0209
-        self.pwm_max = 65535.0
         
         # Create an object of pre-defined Solver class
         self.solver_obj = MPCSolver(conrtol_freq)
@@ -217,21 +219,6 @@ class PositionController:
         self.counter = int(0)
         self.ave_cycle_time = float(0.0)
         self.max_cycle_time = float(0.0)
-    
-    def thrust2pwm(self, thrust):
-        """Convert thrust to pwm using a quadratic function."""
-        pwm = self.a_coeff * thrust * thrust + self.b_coeff * thrust + self.c_coeff
-        pwm = np.maximum(pwm, 0.0)
-        pwm = np.minimum(pwm, 1.0)
-        thrust_pwm = pwm * self.pwm_max
-        return thrust_pwm
-    
-    def pwm2thrust(self, pwm):
-        """Convert pwm to thrust using a quadratic function."""
-        pwm_scaled = pwm / self.pwm_max
-        # solve quadratic equation using abc formula
-        thrust = (-self.b_coeff + np.sqrt(self.b_coeff**2 - 4 * self.a_coeff * (self.c_coeff - pwm_scaled))) / (2 * self.a_coeff)
-        return thrust
 
     def mpc_controller(self, current_state, target_state_arr):
         # Set initial state
@@ -305,7 +292,7 @@ class PositionController:
         current_thrust = min(current_thrust, 1.8 * self.params.quad.m * self.params.quad.g) # incase too large acceleration
         
         # Transform thrust_desired back into pwm_desired
-        pwm_desired = self.thrust2pwm(current_thrust)
+        pwm_desired = thrust2pwm(current_thrust)
 
         return pwm_desired, euler_desired
 

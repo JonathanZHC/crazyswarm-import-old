@@ -8,7 +8,8 @@ import rospy
 
 from position_ctl_m import PositionController
 from utils import GRAVITY, get_file_path_from_run
-from helper import deg2rad, euler2quat, quat2euler
+from helper import deg2rad, euler2quat, quat2euler, pwm2thrust, thrust2pwm
+
 from crazyswarm.msg import StateVector
 from geometry_msgs.msg import Twist
 # Needed to send numpy.array as a msg
@@ -216,7 +217,7 @@ class Simulator: # called by cf_sim.launch
         pitch = deg2rad(pitch_deg)
         yaw = deg2rad(yaw_deg)
 
-        thrust = self.pos_controller.pwm2thrust(pwm_thrust)
+        thrust = pwm2thrust(pwm_thrust)
 
         self.cmd = np.array([roll, pitch, yaw, thrust])
 

@@ -3,6 +3,8 @@ import numpy as np
 import math
 from scipy.spatial.transform import Rotation
 import matplotlib.pyplot as plt
+import os
+import json
 
 
 def rad2deg(rad):
@@ -101,7 +103,7 @@ def rotation2euler(R): # use class scipy.spatial.transform.rotation
 
     if np.any(euler > math.pi) or np.any(euler < -math.pi):
         print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        print("eot2euler ERROR!!!!!!!!!!!!!!!!!!!")
+        print("rot2euler ERROR!!!!!!!!!!!!!!!!!!!")
 
     return euler
 
@@ -112,6 +114,43 @@ def euler2rotation(roll, pitch, yaw):
     R = rotation_z(yaw) @ rotation_y(pitch) @ rotation_x(roll)
 
     return R
+
+def thrust2pwm(thrust):
+    """Convert thrust to pwm using a quadratic function."""
+    # abc-formula coefficients for thrust to pwm conversion
+    # pwm = a * thrust^2 + b * thrust + c
+    script_dir = os.path.dirname(__file__)
+    param_file = os.path.join(script_dir, "parameters.json")
+    with open(param_file) as f:
+        params = json.load(f)  
+
+    a_coeff = params["pwm_thrust"]["a_coeff"]
+    b_coeff = params["pwm_thrust"]["b_coeff"]
+    c_coeff = params["pwm_thrust"]["c_coeff"]
+    pwm_max = params["quad"]["pwm_max"]
+
+    pwm = a_coeff * thrust * thrust + b_coeff * thrust + c_coeff
+    pwm = np.maximum(pwm, 0.0)
+    pwm = np.minimum(pwm, 1.0)
+    thrust_pwm = pwm * pwm_max
+    return thrust_pwm
+    
+def pwm2thrust(pwm):
+    """Convert pwm to thrust using a quadratic function."""
+    script_dir = os.path.dirname(__file__)
+    param_file = os.path.join(script_dir, "parameters.json")
+    with open(param_file) as f:
+        params = json.load(f)  
+
+    a_coeff = params["pwm_thrust"]["a_coeff"]
+    b_coeff = params["pwm_thrust"]["b_coeff"]
+    c_coeff = params["pwm_thrust"]["c_coeff"]
+    pwm_max = params["quad"]["pwm_max"]
+
+    pwm_scaled = pwm / pwm_max
+    # solve quadratic equation using abc formula
+    thrust = (-b_coeff + np.sqrt(b_coeff**2 - 4 * a_coeff * (c_coeff - pwm_scaled))) / (2 * a_coeff)
+    return thrust
 
 
 def clamp(i_error, i_range):

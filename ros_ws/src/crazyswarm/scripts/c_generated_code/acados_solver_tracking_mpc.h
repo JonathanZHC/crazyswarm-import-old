@@ -42,7 +42,7 @@
 #define TRACKING_MPC_NP     0
 #define TRACKING_MPC_NBX    9
 #define TRACKING_MPC_NBX0   9
-#define TRACKING_MPC_NBU    0
+#define TRACKING_MPC_NBU    4
 #define TRACKING_MPC_NSBX   0
 #define TRACKING_MPC_NSBU   0
 #define TRACKING_MPC_NSH    0

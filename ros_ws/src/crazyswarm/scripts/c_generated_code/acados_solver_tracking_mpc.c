@@ -550,6 +550,34 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
 
 
     /* constraints that are the same for initial and intermediate */
+    // u
+    int* idxbu = malloc(NBU * sizeof(int));
+    
+    idxbu[0] = 0;
+    idxbu[1] = 1;
+    idxbu[2] = 2;
+    idxbu[3] = 3;
+    double* lubu = calloc(2*NBU, sizeof(double));
+    double* lbu = lubu;
+    double* ubu = lubu + NBU;
+    
+    lbu[0] = 0.13525931330136065;
+    ubu[0] = 0.6373621798607251;
+    lbu[1] = -1.57;
+    ubu[1] = 1.57;
+    lbu[2] = -1.57;
+    ubu[2] = 1.57;
+    lbu[3] = -1.57;
+    ubu[3] = 1.57;
+
+    for (int i = 0; i < N; i++)
+    {
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "idxbu", idxbu);
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "lbu", lbu);
+        ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, i, "ubu", ubu);
+    }
+    free(idxbu);
+    free(lubu);
 
 
 
