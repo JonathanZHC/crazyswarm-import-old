@@ -68,11 +68,11 @@ class MPCModel:
                     vy, 
                     vz, 
                     (params_acc[0] * f_collective + params_acc[1]) * sin(p),
-                    -(params_acc[0] * f_collective + params_acc[1]) * sin(y) * cos(p),
-                    (params_acc[0] * f_collective + params_acc[1]) * cos(y) * cos(p) - GRAVITY,
-                    params_roll_rate[0][0] * r + params_roll_rate[1][0] * r_cmd,
-                    params_pitch_rate[0][0] * p + params_pitch_rate[1][0] * p_cmd,
-                    params_yaw_rate[0][0] * y + params_yaw_rate[1][0] * y_cmd)
+                    -(params_acc[0] * f_collective + params_acc[1]) * sin(r) * cos(p),
+                    (params_acc[0] * f_collective + params_acc[1]) * cos(r) * cos(p) - GRAVITY,
+                    params_roll_rate[0] * r + params_roll_rate[1] * r_cmd,
+                    params_pitch_rate[0] * p + params_pitch_rate[1] * p_cmd,
+                    params_yaw_rate[0] * y + params_yaw_rate[1] * y_cmd)
 
         # Initialize the nonlinear model for NMPC formulation
         self.model = AcadosModel()
@@ -146,7 +146,7 @@ class MPCSolver:
         # Define output matrix
         Vx = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_state))
         Vx[:model_obj.dim_state_position, :model_obj.dim_state_position] = np.eye(model_obj.dim_state_position)
-        Vx[model_obj.dim_state_position, -3] = np.eye(1)
+        Vx[model_obj.dim_state_position, -1] = np.eye(1)
         ocp.cost.Vx = Vx
         # Define breakthrough matrix
         Vu = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_input)) 
@@ -157,7 +157,7 @@ class MPCSolver:
         # Define output matrix
         Vx_e = np.zeros((model_obj.dim_output, model_obj.dim_state))
         Vx_e[:model_obj.dim_state_position, :model_obj.dim_state_position] = np.eye(model_obj.dim_state_position)
-        Vx_e[model_obj.dim_state_position:model_obj.dim_output, (model_obj.dim_state_position - model_obj.dim_output):] = np.eye(model_obj.dim_output - model_obj.dim_state_position)
+        Vx_e[model_obj.dim_state_position, -1] = np.eye(model_obj.dim_output - model_obj.dim_state_position)
         ocp.cost.Vx_e = Vx_e
 
         '''Constraints setting'''
@@ -263,14 +263,14 @@ class PositionController:
 
         return u_opt
 
-    def compute_action(self, measured_pos, measured_rpy, measured_vel, desired_pos_arr, desired_vel_arr, desired_roll_arr):
+    def compute_action(self, measured_pos, measured_rpy, measured_vel, desired_pos_arr, desired_vel_arr, desired_yaw_arr):
         """Compute the thrust and euler angles for the drone to reach the desired position.
         
         Args:
             measured_pos (np.array): current position of the drone
             measured_rpy (np.array): current roll, pitch, yaw angles of the drone in radians
             desired_pos (np.array): desired position of the drone
-            desired_roll (float): desired roll angle of the drone in radians
+            desired_yaw (float): desired yaw angle of the drone in radians
             dt (float): time step
             
         Returns:
@@ -279,7 +279,7 @@ class PositionController:
         """
 
         current_state = np.hstack((measured_pos, measured_vel, measured_rpy))
-        target_output_arr = np.hstack((desired_pos_arr, desired_roll_arr))
+        target_output_arr = np.hstack((desired_pos_arr, desired_yaw_arr))
 
         # Call API function for Acados to solve MPC problem on current time step
         input_desired = self.mpc_controller(current_state, target_output_arr)

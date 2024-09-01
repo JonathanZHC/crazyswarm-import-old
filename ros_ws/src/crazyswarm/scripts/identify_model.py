@@ -21,7 +21,7 @@ class DataSmoother:
             DataVarIndex.POS_X: DataVarIndex.VEL_X,
             DataVarIndex.POS_Y: DataVarIndex.VEL_Y,
             DataVarIndex.POS_Z: DataVarIndex.VEL_Z,
-            DataVarIndex.ROLL: DataVarIndex.ROLL_RATE,
+            DataVarIndex.ROLL: DataVarIndex._RATE,
             DataVarIndex.PITCH: DataVarIndex.PITCH_RATE,
             DataVarIndex.YAW: DataVarIndex.YAW_RATE,
         }

@@ -32,7 +32,7 @@ class DataVarIndex(IntEnum):
     DES_POS_X = 17
     DES_POS_Y = 18
     DES_POS_Z = 19
-    DES_ROLL = 20
+    DES_YAW = 20
     DES_VEL_X = 21
     DES_VEL_Y = 22
     DES_VEL_Z = 23

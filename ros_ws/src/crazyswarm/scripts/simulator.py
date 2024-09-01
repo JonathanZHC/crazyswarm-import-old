@@ -148,8 +148,8 @@ class Quad3DDynamics:
         transformed_thrust = self.params_acc[0] * cmd_thrust + self.params_acc[1]
 
         x_ddot = cs.sin(pitch) * transformed_thrust
-        y_ddot = - cs.sin(yaw) * cs.cos(pitch) * transformed_thrust
-        z_ddot = cs.cos(yaw) * cs.cos(pitch) * transformed_thrust - GRAVITY
+        y_ddot = - cs.sin(roll) * cs.cos(pitch) * transformed_thrust
+        z_ddot = cs.cos(roll) * cs.cos(pitch) * transformed_thrust - GRAVITY
 
         return cs.vertcat(x_dot, y_dot, z_dot, roll_rate, pitch_rate, yaw_rate, x_ddot, y_ddot, z_ddot)
     

@@ -53,7 +53,7 @@ class TrajectoryGenerator2DPeriodicMotion():
         # Initialize position and velocity references
         pos_ref = np.zeros((3,))
         vel_ref = np.zeros((3,))
-        roll_ref = np.zeros((1,))
+        yaw_ref = np.zeros((1,))
 
         # Set position and velocity references based on the trajectory chosen
         pos_ref[self.coord_index_a] = coords_a + self.position_offset[self.coord_index_a]
@@ -63,7 +63,7 @@ class TrajectoryGenerator2DPeriodicMotion():
         vel_ref[self.coord_index_a] = coords_a_dot
         vel_ref[self.coord_index_b] = coords_b_dot
 
-        return pos_ref, vel_ref, roll_ref
+        return pos_ref, vel_ref, yaw_ref
 
     def set_coordinates_indeces(self): 
         if self.traj_plane[0] in self.direction_list and self.traj_plane[1] in self.direction_list and self.traj_plane[0] != self.traj_plane[1]:
@@ -231,12 +231,12 @@ class TrajectoryGenerator3DPeriodicMotion():
         # t: time for current step in trajectory running, unit: second
         
         # call function figure8 to calculate the reference state for current step
-        coords_a, coords_b, coords_c, coords_a_dot, coords_b_dot, coords_c_dot, roll= self.figure8(t) 
+        coords_a, coords_b, coords_c, coords_a_dot, coords_b_dot, coords_c_dot, yaw= self.figure8(t) 
 
         # Initialize position and velocity references
         pos_ref = np.zeros((3,))
         vel_ref = np.zeros((3,))
-        roll_ref = np.zeros((1,))
+        yaw_ref = np.zeros((1,))
 
         # Set position and velocity references based on the trajectory chosen
         pos_ref[self.coord_index_a] = coords_a + self.position_offset[self.coord_index_a]
@@ -247,9 +247,9 @@ class TrajectoryGenerator3DPeriodicMotion():
         vel_ref[self.coord_index_b] = coords_b_dot
         vel_ref[self.coord_index_c] = coords_c_dot
 
-        roll_ref = roll
+        yaw_ref = yaw
 
-        return pos_ref, vel_ref, roll_ref
+        return pos_ref, vel_ref, yaw_ref
     
     def set_coordinates_indeces(self): 
         if self.traj_plane[0] in self.direction_list and self.traj_plane[1] in self.direction_list and self.traj_plane[2] in self.direction_list and len(set(self.traj_plane)) == len(self.traj_plane):
@@ -276,7 +276,7 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_c_dot = self.scaling * 0.1
         '''
 
-        '''
+        
         # curve 2
         coords_a = self.scaling * np.sin(self.traj_freq * t)
         coords_b = self.scaling * np.cos(self.traj_freq * t)
@@ -285,9 +285,9 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_a_dot = self.scaling * self.traj_freq * np.cos(self.traj_freq * t)
         coords_b_dot = - self.scaling * self.traj_freq * np.sin(self.traj_freq * t)
         coords_c_dot = self.scaling * self.traj_freq * np.cos(2 * self.traj_freq * t)
-        '''
-
         
+
+        '''
         # curve 3
         coords_a = self.scaling * np.sin(self.traj_freq * t) * np.sin(self.traj_freq * t)
         coords_b = self.scaling * np.cos(self.traj_freq * t)
@@ -296,7 +296,7 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_a_dot = self.scaling * self.traj_freq * np.sin(2 * self.traj_freq * t)
         coords_b_dot = - self.scaling * self.traj_freq * np.sin(self.traj_freq * t)
         coords_c_dot = self.scaling * self.traj_freq * np.cos(2 * self.traj_freq * t)
-        
+        '''
 
         '''
         # curve 4
@@ -336,9 +336,9 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_c_dot = self.scaling * self.traj_freq * np.cos(2 * self.traj_freq * t)
         '''
         
-        roll = 0
+        yaw = 0
 
-        return coords_a, coords_b, coords_c, coords_a_dot, coords_b_dot, coords_c_dot, roll
+        return coords_a, coords_b, coords_c, coords_a_dot, coords_b_dot, coords_c_dot, yaw
 
     def preview_trajectory(self): # tbd
         pass

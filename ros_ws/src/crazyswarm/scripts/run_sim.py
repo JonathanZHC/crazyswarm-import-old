@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
     num_cycles = 2.0  # Number of cycles to complete
-    scaling = 0.75  # Trajectory scaling
+    scaling = 1.5  # Trajectory scaling
     total_time = 10.0  # Trajectory length in seconds
     sample_time = 0.01  # Sampling time, only for plotting
     traj_plane = "xyz"  # Trajectory plane
@@ -147,9 +147,9 @@ if __name__ == "__main__":
     # Take off
     velocity = 0.3
     height = 0.7
-    target_roll_deg = 0.0
+    target_yaw_deg = 0.0
     print("Taking off...")
-    quad_motion.take_off(velocity, height, target_roll_deg)
+    quad_motion.take_off(velocity, height, target_yaw_deg)
 
     # Track trajectory
     print("Tracking trajectory...")

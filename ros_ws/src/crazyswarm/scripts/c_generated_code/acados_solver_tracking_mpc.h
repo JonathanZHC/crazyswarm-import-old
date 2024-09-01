@@ -63,7 +63,7 @@
 #define TRACKING_MPC_NY0    8
 #define TRACKING_MPC_NY     8
 #define TRACKING_MPC_NYN    4
-#define TRACKING_MPC_N      60
+#define TRACKING_MPC_N      30
 #define TRACKING_MPC_NH     0
 #define TRACKING_MPC_NHN    0
 #define TRACKING_MPC_NH0    0

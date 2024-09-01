@@ -413,7 +413,7 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     Vx_0[0+(NY0) * 0] = 1;
     Vx_0[1+(NY0) * 1] = 1;
     Vx_0[2+(NY0) * 2] = 1;
-    Vx_0[3+(NY0) * 6] = 1;
+    Vx_0[3+(NY0) * 8] = 1;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "Vx", Vx_0);
     free(Vx_0);
     double* Vu_0 = calloc(NY0*NU, sizeof(double));
@@ -453,7 +453,7 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     Vx[0+(NY) * 0] = 1;
     Vx[1+(NY) * 1] = 1;
     Vx[2+(NY) * 2] = 1;
-    Vx[3+(NY) * 6] = 1;
+    Vx[3+(NY) * 8] = 1;
     for (int i = 1; i < N; i++)
     {
         ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, i, "Vx", Vx);
@@ -707,7 +707,7 @@ int with_solution_sens_wrt_params = false;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "levenberg_marquardt", &levenberg_marquardt);
 
     /* options QP solver */
-    int qp_solver_cond_N;const int qp_solver_cond_N_ori = 60;
+    int qp_solver_cond_N;const int qp_solver_cond_N_ori = 30;
     qp_solver_cond_N = N < qp_solver_cond_N_ori ? N : qp_solver_cond_N_ori; // use the minimum value here
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_cond_N", &qp_solver_cond_N);
 
