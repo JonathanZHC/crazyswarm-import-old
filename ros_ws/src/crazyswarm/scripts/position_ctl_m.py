@@ -40,7 +40,7 @@ class MPCModel:
         self.dim_state_velocity = 3
         self.dim_state_euler = 3
         self.dim_state = self.dim_state_position + self.dim_state_velocity + self.dim_state_euler
-        self.dim_output = 4
+        self.dim_output = 7
         self.dim_input = 4
 
         '''Model setting'''
@@ -145,8 +145,8 @@ class MPCSolver:
         # Initialize output function for stage cost
         # Define output matrix
         Vx = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_state))
-        Vx[:model_obj.dim_state_position, :model_obj.dim_state_position] = np.eye(model_obj.dim_state_position)
-        Vx[model_obj.dim_state_position, -1] = np.eye(1)
+        Vx[:6, :6] = np.eye(6)
+        Vx[6, -1] = np.eye(1)
         ocp.cost.Vx = Vx
         # Define breakthrough matrix
         Vu = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_input)) 
@@ -156,8 +156,8 @@ class MPCSolver:
         # Initialize output function for terminal cost
         # Define output matrix
         Vx_e = np.zeros((model_obj.dim_output, model_obj.dim_state))
-        Vx_e[:model_obj.dim_state_position, :model_obj.dim_state_position] = np.eye(model_obj.dim_state_position)
-        Vx_e[model_obj.dim_state_position, -1] = np.eye(model_obj.dim_output - model_obj.dim_state_position)
+        Vx_e[:6, :6] = np.eye(6)
+        Vx_e[6, -1] = np.eye(1)
         ocp.cost.Vx_e = Vx_e
 
         '''Constraints setting'''
@@ -279,7 +279,7 @@ class PositionController:
         """
 
         current_state = np.hstack((measured_pos, measured_vel, measured_rpy))
-        target_output_arr = np.hstack((desired_pos_arr, desired_yaw_arr))
+        target_output_arr = np.hstack((desired_pos_arr, desired_vel_arr, desired_yaw_arr))
 
         # Call API function for Acados to solve MPC problem on current time step
         input_desired = self.mpc_controller(current_state, target_output_arr)

@@ -60,9 +60,9 @@
 #define TRACKING_MPC_NG     0
 #define TRACKING_MPC_NBXN   0
 #define TRACKING_MPC_NGN    0
-#define TRACKING_MPC_NY0    8
-#define TRACKING_MPC_NY     8
-#define TRACKING_MPC_NYN    4
+#define TRACKING_MPC_NY0    11
+#define TRACKING_MPC_NY     11
+#define TRACKING_MPC_NYN    7
 #define TRACKING_MPC_N      30
 #define TRACKING_MPC_NH     0
 #define TRACKING_MPC_NHN    0
