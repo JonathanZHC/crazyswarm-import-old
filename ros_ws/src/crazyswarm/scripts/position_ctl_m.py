@@ -242,7 +242,8 @@ class PositionController:
         start = timeit.default_timer() # To record cycle time for each iteration
         status = self.solver_obj.solver.solve()
         if status != 0:
-            raise Exception(f"ACADOS failed to solve a feasible solution，return status: {status}")
+            #raise Exception(f"ACADOS failed to solve a feasible solution，return status: {status}")
+            rospy.loginfo(f"ACADOS failed to solve a feasible solution，return status: {status}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
 
         # Calculate average cycle time
         cur_cycle_time = timeit.default_timer() - start
