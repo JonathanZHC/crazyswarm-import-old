@@ -66,6 +66,7 @@ class Status(IntEnum):
     VERTICAL = 4
     INTERPOLATE = 5
     HORIZONTAL = 6
+    STATIC_OBSV = 7
 
 
 match_status = {
@@ -76,6 +77,7 @@ match_status = {
         Status.VERTICAL.name: Status.VERTICAL,
         Status.INTERPOLATE.name: Status.INTERPOLATE,
         Status.HORIZONTAL.name: Status.HORIZONTAL,
+        Status.STATIC_OBSV.name: Status.STATIC_OBSV,
         }
 
 
