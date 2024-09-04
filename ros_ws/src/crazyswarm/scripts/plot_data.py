@@ -200,7 +200,7 @@ class Plotter:
 if __name__ == "__main__":
     wandb_project = "test"
     # Plot the entire trajectory or just the tracking part
-    status = Status.TRACK_TRAJ #status = Status.TRACK_TRAJ
+    status = Status.STATIC_OBSV #status = Status.TRACK_TRAJ
 
     # Specify the indices to be plotted
     plot_indices = None
@@ -216,7 +216,7 @@ if __name__ == "__main__":
     # Specify the data by setting either the run_name or the file_name
     run_name = 'glamorous-sea-134' # run_name = 'flowing-spaceship-73'
     file_name = None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
-    use_latest = False # use_latest has the higher periority than setting the run_name
+    use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
     
     file_path, traj_plane = get_file_path_from_run(wandb_project, run_name, file_name, use_latest, smoothed)
@@ -253,12 +253,12 @@ if __name__ == "__main__":
         data_index_b_vel = plane2indices_vel[traj_plane[1]]
         data_index_c_vel = plane2indices_vel[traj_plane[2]]
 
-        plot_indices = [#(data_index_a, data_index_b), 
-                        #(data_index_b, data_index_c), 
-                        #(data_index_a, data_index_c), 
-                        #data_index_a, 
-                        #data_index_b,
-                        #data_index_c,
+        plot_indices = [(data_index_a, data_index_b), 
+                        (data_index_b, data_index_c), 
+                        (data_index_a, data_index_c), 
+                        data_index_a, 
+                        data_index_b,
+                        data_index_c,
                         data_index_a_vel,
                         data_index_b_vel,
                         data_index_c_vel,
