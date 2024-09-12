@@ -1,7 +1,6 @@
 cmake_minimum_required(VERSION 2.8.3)
 project(crazyswarm)
 
-
 # On 64-bit Linux we can enable optitrack_closed_source
 if(CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL x86_64 OR CMAKE_HOST_SYSTEM_PROCESSOR STREQUAL amd64)
   option(LIBMOTIONCAPTURE_ENABLE_OPTITRACK_CLOSED_SOURCE "Enable optitrack closed source" ON)
@@ -20,17 +19,32 @@ find_package(catkin REQUIRED COMPONENTS
   tf_conversions
 )
 
-set (CMAKE_CXX_STANDARD 11)
-set (CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 ## System dependencies are found with CMake's conventions
-# find_package(Boost REQUIRED COMPONENTS system)
 find_package(PCL REQUIRED)
-
 find_package(Eigen3 REQUIRED)
-find_package(ACADO REQUIRED)
 
-SET( CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR})
+# 设置acados的相对路径
+set(ACADOS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../../../acados")
+
+# 包含acados的头文件目录
+include_directories(${ACADOS_DIR}/include)
+
+# 查找acados库文件
+find_library(ACADOS_LIB NAMES acados PATHS ${ACADOS_DIR}/lib)
+
+# 检查acados库是否找到
+if(ACADOS_LIB)
+  message(STATUS "Found acados library at ${ACADOS_LIB}")
+else()
+  message(FATAL_ERROR "Could not find acados library in ${ACADOS_DIR}/lib")
+endif()
+
+# Set CMAKE_MODULE_PATH for ACADO (assuming you still need this for ACADO)
+SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR})
+
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures
@@ -86,6 +100,7 @@ add_message_files(
   Hover.msg
   Position.msg
   StateVector.msg
+  Command.msg
 )
 
 ## Generate added messages and services with any dependencies listed here
@@ -167,8 +182,9 @@ include_directories(
 )
 
 link_directories(
-  /home/haocheng/acados/build/acados  # path of acado
+  ${ACADOS_DIR}/lib  # 更改为acados的库路径
 )
+
 
 ## Declare a cpp executable
 add_executable(crazyswarm_server
@@ -179,7 +195,6 @@ add_dependencies(crazyswarm_server
 )
 target_link_libraries(crazyswarm_server
   ${catkin_LIBRARIES}
-  ${ACADO_SHARED_LIBRARIES}
   libmotioncapture
   acados # dependency of acado
 )
