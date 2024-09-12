@@ -273,21 +273,33 @@ class QuadMotion:
                 data[DataVarIndex.VICON_YAW] = self.vicon.rpy[2]
             self.data_logger.log_data(data)
 
+
+
+
+        if self.prev_t:
+            delta_t_3 = t - self.prev_t
+            print("t - self.prev_t %.8f" % delta_t_3)
+
+
+
+
         if self.sim:
-            rospy.sleep(self.dt)
-            # # adjust sleep time to match control frequency
-            # sleep_time = self.dt
-            # if self.prev_t is not None:
-            #     sleep_offset = t - self.prev_t - self.dt
-            #     # Use the mean of the sleep offset to adjust the sleep time
-            #     sleep_offset_sum = self.sleep_offset_mean * self.sleep_offset_counter
-            #     self.sleep_offset_counter += 1
-            #     self.sleep_offset_mean = (sleep_offset_sum + sleep_offset) / self.sleep_offset_counter
-            #     print("Sleep offset: %.4f" % self.sleep_offset_mean)
-            #     if sleep_offset >= 1e-5:
-            #         # sleep_time -= sleep_offset
-            #         sleep_time -= self.sleep_offset_mean
-            # rospy.sleep(sleep_time)
+            #rospy.sleep(self.dt)
+            # adjust sleep time to match control frequency
+            sleep_time = self.dt
+            if self.prev_t is not None:
+                sleep_offset = t - self.prev_t - self.dt
+                #print("Sleep offset: %.4f" % sleep_offset)
+
+                # Use the mean of the sleep offset to adjust the sleep time
+                sleep_offset_sum = self.sleep_offset_mean * self.sleep_offset_counter
+                self.sleep_offset_counter += 1
+                self.sleep_offset_mean = (sleep_offset_sum + sleep_offset) / self.sleep_offset_counter
+                print("Sleep offset: %.4f" % self.sleep_offset_mean)
+                if sleep_offset >= 1e-5:
+                    #sleep_time -= sleep_offset
+                    sleep_time -= self.sleep_offset_mean
+            rospy.sleep(sleep_time)
             self.prev_t = t
         else:
             self.timeHelper.sleepForRate(self.control_freq)
