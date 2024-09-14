@@ -7,6 +7,7 @@ import csv
 import os
 import numpy as np
 import json
+import math
 
 from pycrazyswarm import *
 from position_ctl_m import PositionController
@@ -150,6 +151,19 @@ class QuadMotion:
         self.sleep_offset_counter = 0
 
 
+        "----------for test----------"
+        self.counter = 0
+        self.delta_t_0_ave = 0
+        self.delta_t_0_var = 0
+        self.delta_t_1_ave = 0
+        self.delta_t_1_var = 0
+        self.delta_t_2_ave = 0
+        self.delta_t_2_var = 0
+        self.delta_t_sum_ave = 0
+        self.delta_t_sum_var = 0
+        "----------for test----------"
+
+
     def log_data_init(self):
         """ Initialize the data logger. """
         self.data_logger = DataLogger(self.filename)
@@ -201,6 +215,16 @@ class QuadMotion:
         dt = t - self.prev_t
         return dt
 
+
+
+
+
+
+
+
+
+
+
     def pos_control(self, pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr, status):
         """ Position control of the drone.
 
@@ -213,8 +237,28 @@ class QuadMotion:
 
         """
 
-        # dt = self.delta_t()
-        dt = self.dt
+        #dt = self.delta_t()
+        #dt = self.dt
+
+
+
+
+        "----------for test----------"
+        self.counter += 1
+        t1 = time.time()
+        if self.prev_t:
+            delta_t_0 = t1 - self.prev_t
+            self.delta_t_0_ave_old = self.delta_t_0_ave
+            self.delta_t_0_ave += (delta_t_0 - self.delta_t_0_ave_old) / self.counter
+            self.delta_t_0_var = (self.delta_t_0_var * (self.counter-2) + (delta_t_0 - self.delta_t_0_ave_old) * (delta_t_0 - self.delta_t_0_ave)) / self.counter
+            rospy.loginfo("ave time since start of last cycle (inkl. sleep): %f. " %self.delta_t_0_ave)
+            rospy.loginfo("var of time since start of last cycle (inkl. sleep): %f. " %math.sqrt(self.delta_t_0_var))
+        "----------for test----------"
+
+
+
+
+
         pwm, euler = self.posCtrl.compute_action(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr)
 
         t = time.time() 
@@ -228,17 +272,28 @@ class QuadMotion:
         # Publish the control input 
         self.controller_pub.publish(self.controller_command)
 
+
+
+
+
+        "----------for test----------"
+        t2 = time.time()
+        delta_t_1 = t2 - t1
+        self.delta_t_1_ave_old = self.delta_t_1_ave
+        self.delta_t_1_ave += (delta_t_1 - self.delta_t_1_ave_old) / self.counter
+        self.delta_t_1_var = (self.delta_t_1_var * (self.counter-2) + (delta_t_1 - self.delta_t_1_ave_old) * (delta_t_1 - self.delta_t_1_ave)) / self.counter
+        rospy.loginfo("ave cycle time for period 1 of controller: %f. " %self.delta_t_1_ave)
+        rospy.loginfo("var of cycle time for period 1 of controller: %f. " %math.sqrt(self.delta_t_1_var))
+        "----------for test----------"
+
+
+
+
+
         # Realise the command
         euler_deg = rad2deg(euler)
 
         self.cf.cmdVel(euler_deg[0], euler_deg[1], euler_deg[2], pwm)
-
-        if self.verbose:
-            rpy_deg = rad2deg(rpy)
-            print("Target pos %.4f, %.4f, %.4f" % (target_pos_arr[0, 0], target_pos_arr[0, 1], target_pos_arr[0, 2]))
-            print("Measured: roll %.4f, pitch %.4f, yaw %.4f" % (rpy_deg[0], rpy_deg[1], rpy_deg[2]))
-            print("CMD: pwm %.4f, roll %.4f deg, pitch %.4f deg, yaw %.4f deg" % (pwm, euler_deg[0], euler_deg[1], euler_deg[2]))
-        print("time %.2f" % t)
 
         if self.log_data:
             data = [None] * len(DataVarIndex)
@@ -276,9 +331,24 @@ class QuadMotion:
 
 
 
-        if self.prev_t:
-            delta_t_3 = t - self.prev_t
-            print("t - self.prev_t %.8f" % delta_t_3)
+        "----------for test----------"
+        t3 = time.time()
+        delta_t_2 = t3 - t2
+        self.delta_t_2_ave_old = self.delta_t_2_ave
+        self.delta_t_2_ave += (delta_t_2 - self.delta_t_2_ave_old) / self.counter
+        self.delta_t_2_var = (self.delta_t_2_var * (self.counter-2) + (delta_t_2 - self.delta_t_2_ave_old) * (delta_t_2 - self.delta_t_2_ave)) / self.counter
+        rospy.loginfo("ave cycle time for period 2 of controller: %f. " %self.delta_t_2_ave)
+        rospy.loginfo("var of cycle time for period 2 of controller: %f. " %math.sqrt(self.delta_t_2_var))
+        "----------for test----------"
+        delta_t_sum = t3 - t1
+        self.delta_t_sum_ave_old = self.delta_t_sum_ave
+        self.delta_t_sum_ave += (delta_t_sum - self.delta_t_sum_ave_old) / self.counter
+        self.delta_t_sum_var = (self.delta_t_sum_var * (self.counter-2) + (delta_t_sum - self.delta_t_sum_ave_old) * (delta_t_sum - self.delta_t_sum_ave)) / self.counter
+        rospy.loginfo("ave cycle time of controller: %f. " %self.delta_t_sum_ave)
+        rospy.loginfo("var of cycle time of controller: %f. " %math.sqrt(self.delta_t_sum_var))
+        "----------for test----------"
+
+
 
 
 
@@ -302,7 +372,23 @@ class QuadMotion:
             rospy.sleep(sleep_time)
             self.prev_t = t
         else:
-            self.timeHelper.sleepForRate(self.control_freq)
+            self.timeHelper.sleepForRate(self.control_freq)   # 0.0163s记时的开始与终止
+
+
+        if self.verbose:
+            rpy_deg = rad2deg(rpy)
+            print("Target pos %.4f, %.4f, %.4f" % (target_pos_arr[0, 0], target_pos_arr[0, 1], target_pos_arr[0, 2]))
+            print("Measured: roll %.4f, pitch %.4f, yaw %.4f" % (rpy_deg[0], rpy_deg[1], rpy_deg[2]))
+            print("CMD: pwm %.4f, roll %.4f deg, pitch %.4f deg, yaw %.4f deg" % (pwm, euler_deg[0], euler_deg[1], euler_deg[2]))
+        print("time %.2f" % t)
+
+
+
+
+
+
+
+
 
     def vertical(self, velocity=0.3, height=0.5, target_yaw_deg=0.0, status=Status.VERTICAL):
         """ Move the drone vertically up or down.

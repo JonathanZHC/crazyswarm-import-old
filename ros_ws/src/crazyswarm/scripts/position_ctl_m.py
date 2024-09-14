@@ -134,10 +134,7 @@ class MPCSolver:
 
         # Define other hyperparameters in SQP solving
         ocp.solver_options.nlp_solver_max_iter = 500
-        ocp.solver_options.nlp_solver_tol_stat = 1E-3
-        ocp.solver_options.nlp_solver_tol_eq = 1E-3
-
-        '''Cost function setting'''
+        #ocp.solver_options.nlp_solver_tol_stat  Ralf R¨ omer
         # Set type of cost function
         ocp.cost.cost_type = 'LINEAR_LS' # Stage cost 
         ocp.cost.cost_type_e = 'LINEAR_LS' # Terminal cost 
@@ -255,15 +252,20 @@ class PositionController:
         if status != 0:
             #raise Exception(f"ACADOS failed to solve a feasible solution，return status: {status}")
             rospy.loginfo(f"ACADOS failed to solve a feasible solution，return status: {status}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
+        
 
+        "----------for test----------"
         # Calculate average cycle time
         cur_cycle_time = timeit.default_timer() - start
+        rospy.loginfo('Current cycle time for SQP solving: %f' %cur_cycle_time)
         total_time = self.ave_cycle_time * self.counter + cur_cycle_time
         self.counter += 1
         self.ave_cycle_time = total_time / self.counter
-        rospy.loginfo('Cumulative average cycle time: %f' %self.ave_cycle_time)
+        #rospy.loginfo('Cumulative average cycle time for SQP solving: %f' %self.ave_cycle_time)
         self.max_cycle_time = max(self.max_cycle_time, cur_cycle_time)
-        rospy.loginfo('Cumulative maximal cycle time: %f' %self.max_cycle_time)
+        #rospy.loginfo('Cumulative maximal cycle time for SQP solving: %f' %self.max_cycle_time)
+        "----------for test----------"
+        
 
         # save for warm starting
         for i in range(self.MPC_N): 
