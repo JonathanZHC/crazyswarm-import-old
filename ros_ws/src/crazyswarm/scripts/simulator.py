@@ -10,11 +10,11 @@ from position_ctl_m import PositionController
 from utils import GRAVITY, get_file_path_from_run
 from helper import deg2rad, euler2quat, quat2euler, pwm2thrust, thrust2pwm
 
-from crazyswarm.msg import StateVector
+from crazyswarm.msg import StateVector, Command
 from geometry_msgs.msg import Twist
 # Needed to send numpy.array as a msg
 from rospy.numpy_msg import numpy_msg
-from vicon_bridge.msg import Command
+#from vicon_bridge.msg import Command
 
 
 class Integrator:

@@ -14,10 +14,10 @@ from position_ctl_m import PositionController
 from quadrotor import quadrotor
 from helper import quat2euler, rad2deg, deg2rad
 from trajectory_generator import TrajectoryGenerator2DPeriodicMotion, TrajectoryGenerator3DPeriodicMotion
-from crazyswarm.msg import StateVector
+from crazyswarm.msg import StateVector, Command
 from geometry_msgs.msg import TransformStamped
 from utils import DataVarIndex, Status
-from vicon_bridge.msg import Command
+#from vicon_bridge.msg import Command
 
 
 class DataLogger:
