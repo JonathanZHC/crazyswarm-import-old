@@ -281,6 +281,7 @@ class PositionController:
             x_i = self.solver_obj.solver.get(i, "x")
             # Append the 9th state (index 8) to the list
             yaw_predicted.append(x_i[8])
+        yaw_predicted = np.array(yaw_predicted)
 
 
 
