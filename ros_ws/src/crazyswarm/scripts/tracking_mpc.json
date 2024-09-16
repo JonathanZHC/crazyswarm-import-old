@@ -1,6 +1,7 @@
 {
     "acados_include_path": "/home/haocheng/acados/include",
     "acados_lib_path": "/home/haocheng/acados/lib",
+    "casadi_pool_names": [],
     "code_export_directory": "/home/haocheng/crazyswarm-import/ros_ws/src/crazyswarm/scripts/c_generated_code",
     "constraints": {
         "C": [],
@@ -745,6 +746,7 @@
         "nh_0": 0,
         "nh_e": 0,
         "np": 0,
+        "np_global": 0,
         "nphi": 0,
         "nphi_0": 0,
         "nphi_e": 0,
@@ -820,6 +822,7 @@
         "name": "tracking_mpc",
         "nu_original": null,
         "p": "jhpnnagiieahaaaadaaaaaaaaaaaaaaaaaegdaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+        "p_global": null,
         "t": [],
         "t0": null,
         "t_label": "t",

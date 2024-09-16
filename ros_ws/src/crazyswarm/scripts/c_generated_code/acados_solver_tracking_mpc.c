@@ -42,6 +42,8 @@
 
 
 
+
+
 #include "acados_solver_tracking_mpc.h"
 
 #define NX     TRACKING_MPC_NX
@@ -325,15 +327,22 @@ void tracking_mpc_acados_create_setup_functions(tracking_mpc_solver_capsule* cap
 
 
 
+
+
     // explicit ode
-    capsule->forw_vde_casadi = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
+    capsule->expl_vde_forw = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
     for (int i = 0; i < N; i++) {
-        MAP_CASADI_FNC(forw_vde_casadi[i], tracking_mpc_expl_vde_forw);
+        MAP_CASADI_FNC(expl_vde_forw[i], tracking_mpc_expl_vde_forw);
     }
 
     capsule->expl_ode_fun = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
     for (int i = 0; i < N; i++) {
         MAP_CASADI_FNC(expl_ode_fun[i], tracking_mpc_expl_ode_fun);
+    }
+
+    capsule->expl_vde_adj = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
+    for (int i = 0; i < N; i++) {
+        MAP_CASADI_FNC(expl_vde_adj[i], tracking_mpc_expl_vde_adj);
     }
 
 
@@ -386,8 +395,9 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     /**** Dynamics ****/
     for (int i = 0; i < N; i++)
     {
-        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_forw", &capsule->forw_vde_casadi[i]);
+        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_forw", &capsule->expl_vde_forw[i]);
         ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_ode_fun", &capsule->expl_ode_fun[i]);
+        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_adj", &capsule->expl_vde_adj[i]);
     }
 
     /**** Cost ****/
@@ -942,6 +952,15 @@ int tracking_mpc_acados_update_params_sparse(tracking_mpc_solver_capsule * capsu
 }
 
 
+int tracking_mpc_acados_set_p_global(tracking_mpc_solver_capsule* capsule, double* data, int data_len)
+{
+
+    printf("p_global is not defined, tracking_mpc_acados_set_p_global does nothing.\n");
+}
+
+
+
+
 int tracking_mpc_acados_solve(tracking_mpc_solver_capsule* capsule)
 {
     // solve NLP
@@ -982,15 +1001,19 @@ int tracking_mpc_acados_free(tracking_mpc_solver_capsule* capsule)
     // dynamics
     for (int i = 0; i < N; i++)
     {
-        external_function_external_param_casadi_free(&capsule->forw_vde_casadi[i]);
+        external_function_external_param_casadi_free(&capsule->expl_vde_forw[i]);
         external_function_external_param_casadi_free(&capsule->expl_ode_fun[i]);
+        external_function_external_param_casadi_free(&capsule->expl_vde_adj[i]);
     }
-    free(capsule->forw_vde_casadi);
+    free(capsule->expl_vde_adj);
+    free(capsule->expl_vde_forw);
     free(capsule->expl_ode_fun);
 
     // cost
 
     // constraints
+
+
 
     return 0;
 }

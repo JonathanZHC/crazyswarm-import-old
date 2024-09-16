@@ -238,14 +238,12 @@ class PositionController:
         yref[:, :self.MPC_dim_output] = target_state_arr[:self.MPC_N, :]
         for i in range(self.MPC_N):
             self.solver_obj.solver.set(i, "yref", yref[i, :])
-        # last yef has different shape (dim = 4), must be initialized individually
-        self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, :]) 
-        
-        # Warm starting: initialize a policy for SQP
-        for i in range(self.MPC_N):
+            # Warm starting: initialize a policy for SQP
             self.solver_obj.solver.set(i, "u", self.prev_solution_u[i])
             self.solver_obj.solver.set(i, "x", self.prev_solution_x[i])
-    
+        # last yef has different shape (dim = 4), must be initialized individually
+        self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, :]) 
+
         # Solve MPC problem
         start = timeit.default_timer() # To record cycle time for each iteration
         status = self.solver_obj.solver.solve()
@@ -275,7 +273,18 @@ class PositionController:
         # get optimal policy and return as new input
         u_opt = self.solver_obj.solver.get(0, "u")
 
-        return u_opt
+
+        # Get the 9th state (index 8) for all time steps
+        yaw_predicted = []
+        for i in range(self.MPC_N + 1):
+            # Get the state for the i-th time step
+            x_i = self.solver_obj.solver.get(i, "x")
+            # Append the 9th state (index 8) to the list
+            yaw_predicted.append(x_i[8])
+
+
+
+        return u_opt, yaw_predicted
 
     def compute_action(self, measured_pos, measured_rpy, measured_vel, desired_pos_arr, desired_vel_arr, desired_yaw_arr):
         """Compute the thrust and euler angles for the drone to reach the desired position.
@@ -296,7 +305,7 @@ class PositionController:
         target_output_arr = np.hstack((desired_pos_arr, desired_yaw_arr))
 
         # Call API function for Acados to solve MPC problem on current time step
-        input_desired = self.mpc_controller(current_state, target_output_arr)
+        input_desired, yaw_predicted = self.mpc_controller(current_state, target_output_arr)
 
         current_thrust = input_desired[0]
         euler_desired = input_desired[1:]
@@ -308,7 +317,7 @@ class PositionController:
         # Transform thrust_desired back into pwm_desired
         pwm_desired = thrust2pwm(current_thrust)
 
-        return pwm_desired, euler_desired
+        return pwm_desired, euler_desired, yaw_predicted
 
     def position_controller_reset(self):
         self.i_error = np.zeros(3)
