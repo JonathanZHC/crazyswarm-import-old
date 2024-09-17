@@ -45,6 +45,10 @@ endif()
 # Set CMAKE_MODULE_PATH for ACADO (assuming you still need this for ACADO)
 SET(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${PROJECT_SOURCE_DIR})
 
+# 禁用 OpenMP
+set(ACADOS_WITH_OPENMP OFF)
+
+
 
 
 ## Uncomment this if the package has a setup.py. This macro ensures

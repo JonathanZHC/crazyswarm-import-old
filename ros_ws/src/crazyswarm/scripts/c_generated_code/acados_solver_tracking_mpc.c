@@ -42,8 +42,6 @@
 
 
 
-
-
 #include "acados_solver_tracking_mpc.h"
 
 #define NX     TRACKING_MPC_NX
@@ -327,22 +325,15 @@ void tracking_mpc_acados_create_setup_functions(tracking_mpc_solver_capsule* cap
 
 
 
-
-
     // explicit ode
-    capsule->expl_vde_forw = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
+    capsule->forw_vde_casadi = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
     for (int i = 0; i < N; i++) {
-        MAP_CASADI_FNC(expl_vde_forw[i], tracking_mpc_expl_vde_forw);
+        MAP_CASADI_FNC(forw_vde_casadi[i], tracking_mpc_expl_vde_forw);
     }
 
     capsule->expl_ode_fun = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
     for (int i = 0; i < N; i++) {
         MAP_CASADI_FNC(expl_ode_fun[i], tracking_mpc_expl_ode_fun);
-    }
-
-    capsule->expl_vde_adj = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
-    for (int i = 0; i < N; i++) {
-        MAP_CASADI_FNC(expl_vde_adj[i], tracking_mpc_expl_vde_adj);
     }
 
 
@@ -395,9 +386,8 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     /**** Dynamics ****/
     for (int i = 0; i < N; i++)
     {
-        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_forw", &capsule->expl_vde_forw[i]);
+        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_forw", &capsule->forw_vde_casadi[i]);
         ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_ode_fun", &capsule->expl_ode_fun[i]);
-        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_adj", &capsule->expl_vde_adj[i]);
     }
 
     /**** Cost ****/
@@ -573,12 +563,12 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     
     lbu[0] = 0.13525931330136065;
     ubu[0] = 0.6373621798607251;
-    lbu[1] = -1.57;
-    ubu[1] = 1.57;
-    lbu[2] = -1.57;
-    ubu[2] = 1.57;
-    lbu[3] = -1.57;
-    ubu[3] = 1.57;
+    lbu[1] = -0.7;
+    ubu[1] = 0.7;
+    lbu[2] = -0.7;
+    ubu[2] = 0.7;
+    lbu[3] = -0.7;
+    ubu[3] = 0.7;
 
     for (int i = 0; i < N; i++)
     {
@@ -617,18 +607,18 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     lbx[1] = -3;
     ubx[1] = 3;
     ubx[2] = 3;
-    lbx[3] = -2;
-    ubx[3] = 2;
-    lbx[4] = -2;
-    ubx[4] = 2;
-    lbx[5] = -2;
-    ubx[5] = 2;
-    lbx[6] = -2;
-    ubx[6] = 2;
-    lbx[7] = -2;
-    ubx[7] = 2;
-    lbx[8] = -2;
-    ubx[8] = 2;
+    lbx[3] = -3;
+    ubx[3] = 3;
+    lbx[4] = -3;
+    ubx[4] = 3;
+    lbx[5] = -3;
+    ubx[5] = 3;
+    lbx[6] = -0.7;
+    ubx[6] = 0.7;
+    lbx[7] = -0.7;
+    ubx[7] = 0.7;
+    lbx[8] = -0.7;
+    ubx[8] = 0.7;
 
     for (int i = 1; i < N; i++)
     {
@@ -952,15 +942,6 @@ int tracking_mpc_acados_update_params_sparse(tracking_mpc_solver_capsule * capsu
 }
 
 
-int tracking_mpc_acados_set_p_global(tracking_mpc_solver_capsule* capsule, double* data, int data_len)
-{
-
-    printf("p_global is not defined, tracking_mpc_acados_set_p_global does nothing.\n");
-}
-
-
-
-
 int tracking_mpc_acados_solve(tracking_mpc_solver_capsule* capsule)
 {
     // solve NLP
@@ -1001,19 +982,15 @@ int tracking_mpc_acados_free(tracking_mpc_solver_capsule* capsule)
     // dynamics
     for (int i = 0; i < N; i++)
     {
-        external_function_external_param_casadi_free(&capsule->expl_vde_forw[i]);
+        external_function_external_param_casadi_free(&capsule->forw_vde_casadi[i]);
         external_function_external_param_casadi_free(&capsule->expl_ode_fun[i]);
-        external_function_external_param_casadi_free(&capsule->expl_vde_adj[i]);
     }
-    free(capsule->expl_vde_adj);
-    free(capsule->expl_vde_forw);
+    free(capsule->forw_vde_casadi);
     free(capsule->expl_ode_fun);
 
     // cost
 
     // constraints
-
-
 
     return 0;
 }
@@ -1027,7 +1004,7 @@ void tracking_mpc_acados_print_stats(tracking_mpc_solver_capsule* capsule)
     ocp_nlp_get(capsule->nlp_config, capsule->nlp_solver, "stat_m", &stat_m);
 
     
-    double stat[6000];
+    double stat[240];
     ocp_nlp_get(capsule->nlp_config, capsule->nlp_solver, "statistics", stat);
 
     int nrow = nlp_iter+1 < stat_m ? nlp_iter+1 : stat_m;

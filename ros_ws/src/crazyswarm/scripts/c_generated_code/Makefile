@@ -30,6 +30,8 @@
 
 
 
+
+
 # define sources and use make's implicit rules to generate object files (*.o)
 
 # model
@@ -38,26 +40,28 @@ MODEL_SRC+= tracking_mpc_model/tracking_mpc_expl_ode_fun.c
 MODEL_SRC+= tracking_mpc_model/tracking_mpc_expl_vde_forw.c
 MODEL_SRC+= tracking_mpc_model/tracking_mpc_expl_vde_adj.c
 MODEL_OBJ := $(MODEL_SRC:.c=.o)
+
 # optimal control problem - mostly CasADi exports
 OCP_SRC=
 
 OCP_SRC+= acados_solver_tracking_mpc.c
 OCP_OBJ := $(OCP_SRC:.c=.o)
+
 # for sim solver
 SIM_SRC= acados_sim_solver_tracking_mpc.c
 SIM_OBJ := $(SIM_SRC:.c=.o)
 
-# for target example_sim
-EX_SIM_SRC= main_sim_tracking_mpc.c
-EX_SIM_OBJ := $(EX_SIM_SRC:.c=.o)
-EX_SIM_EXE := $(EX_SIM_SRC:.c=)
 # for target example
 EX_SRC= main_tracking_mpc.c
 EX_OBJ := $(EX_SRC:.c=.o)
 EX_EXE := $(EX_SRC:.c=)
 
+# for target example_sim
+EX_SIM_SRC= main_sim_tracking_mpc.c
+EX_SIM_OBJ := $(EX_SIM_SRC:.c=.o)
+EX_SIM_EXE := $(EX_SIM_SRC:.c=)
 
-# combine model, (potentially) sim and ocp object files
+# combine model, sim and ocp object files
 OBJ=
 OBJ+= $(MODEL_OBJ)
 OBJ+= $(SIM_OBJ)
@@ -101,6 +105,8 @@ LIBACADOS_SIM_SOLVER=lib$(SIM_SRC:.c=.so)
 # virtual targets
 .PHONY : all clean
 
+#all: clean example_sim example shared_lib
+
 all: clean example_sim example
 shared_lib: bundled_shared_lib ocp_shared_lib sim_shared_lib
 
@@ -111,14 +117,15 @@ example: $(EX_OBJ) $(OBJ)
 example_sim: $(EX_SIM_OBJ) $(MODEL_OBJ) $(SIM_OBJ)
 	$(CC) $^ -o $(EX_SIM_EXE) $(LDFLAGS) $(LDLIBS)
 
-sim_shared_lib: $(SIM_OBJ) $(MODEL_OBJ)
-	$(CC) -shared $^ -o $(LIBACADOS_SIM_SOLVER) $(LDFLAGS) $(LDLIBS)
 bundled_shared_lib: $(OBJ)
 	$(CC) -shared $^ -o $(LIBACADOS_SOLVER) $(LDFLAGS) $(LDLIBS)
 
 ocp_shared_lib: $(OCP_OBJ) $(MODEL_OBJ)
 	$(CC) -shared $^ -o $(LIBACADOS_OCP_SOLVER) $(LDFLAGS) $(LDLIBS) \
 	-L$(EXTERNAL_DIR) -l$(EXTERNAL_LIB)
+
+sim_shared_lib: $(SIM_OBJ) $(MODEL_OBJ)
+	$(CC) -shared $^ -o $(LIBACADOS_SIM_SOLVER) $(LDFLAGS) $(LDLIBS)
 
 
 # Cython targets
@@ -147,7 +154,6 @@ ocp_cython: ocp_cython_o
 	acados_ocp_solver_pyx.o \
 	$(abspath .)/libacados_ocp_solver_tracking_mpc.so \
 	$(LDFLAGS) $(LDLIBS)
-
 
 # Sim Cython targets
 sim_cython_c: sim_shared_lib
@@ -180,6 +186,7 @@ clean:
 	$(RM) $(OBJ) $(EX_OBJ) $(EX_SIM_OBJ)
 	$(RM) $(LIBACADOS_SOLVER) $(LIBACADOS_OCP_SOLVER) $(LIBACADOS_SIM_SOLVER)
 	$(RM) $(EX_EXE) $(EX_SIM_EXE)
+
 clean_ocp_shared_lib:
 	$(RM) $(LIBACADOS_OCP_SOLVER)
 	$(RM) $(OCP_OBJ)

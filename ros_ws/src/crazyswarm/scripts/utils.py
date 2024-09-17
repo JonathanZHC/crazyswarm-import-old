@@ -50,6 +50,43 @@ class DataVarIndex(IntEnum):
     PITCH_ACC = 35
     YAW_ACC = 36
 
+    "----------for test----------"
+    # to display the predicted state, 
+    # can only choose 1 state at same time, 
+    # don't need to change variable name
+    x_0 = 37
+    x_1 = 38
+    x_2 = 39
+    x_3 = 40
+    x_4 = 41
+    x_5 = 42
+    x_6 = 43
+    x_7 = 44
+    x_8 = 45
+    x_9 = 46
+    x_10 = 47
+    x_11 = 48
+    x_12 = 49
+    x_13 = 50
+    x_14 = 51
+    x_15 = 52
+    x_16 = 53
+    x_17 = 54
+    x_18 = 55
+    x_19 = 56
+    x_20 = 57
+    x_21 = 58
+    x_22 = 59
+    x_23 = 60
+    x_24 = 61
+    x_25 = 62
+    x_26 = 63
+    x_27 = 64
+    x_28 = 65
+    x_29 = 66
+    x_30 = 67
+    "----------for test----------"
+
 
 var_bounds = {
     DataVarIndex.CMD_THRUST: (2.0e4, 65535.0),

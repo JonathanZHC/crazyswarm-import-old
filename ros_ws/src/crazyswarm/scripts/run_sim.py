@@ -62,6 +62,8 @@ if __name__ == "__main__":
     sample_time = 0.01  # Sampling time, only for plotting
     traj_plane = "xyz"  # Trajectory plane
     mode = '3D' # 2D or 3D
+    plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
+    special_indices = [DataVarIndex.YAW] # Must be given in form of ndarray
 
     if mode == '2D':
 
@@ -106,14 +108,14 @@ if __name__ == "__main__":
         plot_indices = [#(data_index_a, data_index_b), 
                         #(data_index_b, data_index_c), 
                         #(data_index_a, data_index_c), 
-                        #data_index_a, 
-                        #data_index_b,
-                        #data_index_c,
-                        #data_index_a_vel,
-                        #data_index_b_vel,
-                        #data_index_c_vel,
-                        #DataVarIndex.ROLL,
-                        #DataVarIndex.PITCH, 
+                        data_index_a, 
+                        data_index_b,
+                        data_index_c,
+                        data_index_a_vel,
+                        data_index_b_vel,
+                        data_index_c_vel,
+                        DataVarIndex.ROLL,
+                        DataVarIndex.PITCH, 
                         DataVarIndex.YAW,                   
                         #DataVarIndex.CMD_THRUST,
                         #DataVarIndex.ROLL_RATE,
@@ -164,7 +166,11 @@ if __name__ == "__main__":
 
     # Plot the simulation result
     plotter = Plotter(save_fig=False)
-    plotter.plot_data(file_path, plot_indices=plot_indices, status=Status.TRACK_TRAJ) # Status.TRACK_TRAJ
+    if plot_pred_state:
+        plotter.plot_data(file_path, plot_indices=special_indices, status=Status.TRACK_TRAJ, special_indices=special_indices) # Status.TRACK_TRAJ
+    else:
+        plotter.plot_data(file_path, plot_indices=plot_indices, status=Status.TRACK_TRAJ) # Status.TRACK_TRAJ
+    
 
 
 

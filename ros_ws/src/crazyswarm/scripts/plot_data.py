@@ -36,7 +36,7 @@ class Plotter:
         
         self.colors = ['b', 'g', 'r', 'c', 'm', 'y']
 
-    def plot_data(self, file_path, plot_indices=None, status=None, plot_arrangement=None):
+    def plot_data(self, file_path, plot_indices=None, status=None, plot_arrangement=None, special_indices=None):
         # Read the data from the csv file
         data = load_data(file_path)
 
@@ -85,6 +85,7 @@ class Plotter:
         for plot_id, i in enumerate(plot_indices):
             color = self.colors[color_id]
             next_color = self.colors[(color_id + 1) % len(self.colors)]
+            next_next_color = self.colors[(color_id + 2) % len(self.colors)]
             if isinstance(axs, np.ndarray):
                 if len(axs.shape) == 1:
                     axs = axs.reshape(1, -1)
@@ -117,7 +118,25 @@ class Plotter:
                 if i in self.match_desired:
                     # Plot the desired values
                     ax.plot(data[:, DataVarIndex.TIME], data[:, self.match_desired[i]], "--", color=next_color, 
-                            label=self.match_desired[i].name)
+                                label=self.match_desired[i].name)
+                    
+                
+                "----------for test----------"
+                if special_indices:
+                    # Plot the actual values
+                    for index, time_start in enumerate(data[:, DataVarIndex.TIME]):
+                        if index % 6 == 0:  # 仅处理每隔两个的值
+                            time_range_instant = np.linspace(time_start, time_start + 31/60, 31)
+                            pre_state_instant = data[index, DataVarIndex.x_0:]
+                            ax.plot(time_range_instant, pre_state_instant, 
+                                    #label = "pre_state_inst", 
+                                    color = next_next_color, 
+                                    linewidth = 0.5,
+                                    linestyle = '-',
+                                    marker = 'o',
+                                    markersize = 1.5)
+                "----------for test----------"
+
 
                 if i == DataVarIndex.TIME:
                     dt = np.diff(data[:, DataVarIndex.TIME])
@@ -133,6 +152,7 @@ class Plotter:
                     # set axis labels
                     ax.set_xlabel("Time [s]")
                     ax.set_ylabel(i.name)
+
             # set the legend
             ax.legend()
 
@@ -218,6 +238,8 @@ if __name__ == "__main__":
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
+    plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
+    special_indices = [DataVarIndex.POS_X] # Must be give in form of ndarray
     
     file_path, traj_plane = get_file_path_from_run(wandb_project, run_name, file_name, use_latest, smoothed)
 
@@ -271,6 +293,10 @@ if __name__ == "__main__":
                         #DataVarIndex.PITCH_RATE,
                         ] 
         
+    plotter = Plotter(save_fig=False)
+    if plot_pred_state:
+        plotter.plot_data(file_path, plot_indices=special_indices, status=Status.TRACK_TRAJ, special_indices=special_indices) # Status.TRACK_TRAJ
+    else:
+        plotter.plot_data(file_path, plot_indices=plot_indices, status=Status.TRACK_TRAJ) # Status.TRACK_TRAJ
 
-    plotter.plot_data(file_path, plot_indices=plot_indices, status=status)
     #plotter.plot_all_frequency_spectrums(file_path, plot_indices=plot_indices, status=status, threshold_freq=3)

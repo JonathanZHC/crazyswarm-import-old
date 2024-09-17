@@ -259,7 +259,7 @@ class QuadMotion:
 
 
 
-        pwm, euler, yaw_predicted = self.posCtrl.compute_action(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr)
+        pwm, euler, state_predicted = self.posCtrl.compute_action(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr)
 
         t = time.time() 
         # Update the command data to be published
@@ -292,7 +292,6 @@ class QuadMotion:
 
         # Realise the command
         euler_deg = rad2deg(euler)
-        yaw_predicted_deg = rad2deg(yaw_predicted)
 
         self.cf.cmdVel(euler_deg[0], euler_deg[1], euler_deg[2], pwm)
 
@@ -327,7 +326,9 @@ class QuadMotion:
                 data[DataVarIndex.VICON_ROLL] = self.vicon.rpy[0]
                 data[DataVarIndex.VICON_PITCH] = self.vicon.rpy[1]
                 data[DataVarIndex.VICON_YAW] = self.vicon.rpy[2]
-            # Log yaw_predicted_deg (self.posCtrl.MPC_N + 1)
+            for i in range(self.posCtrl.MPC_N + 1): # 0 ~ self.posCtrl.MPC_N
+                pre_index = DataVarIndex.x_0 + i
+                data[pre_index] = state_predicted[i]
 
             self.data_logger.log_data(data)
 
