@@ -238,6 +238,8 @@ if __name__ == "__main__":
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
+    status=Status.TRACK_TRAJ # Status.TRACK_TRAJ
+
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.POS_X] # Must be give in form of ndarray
     
@@ -295,8 +297,8 @@ if __name__ == "__main__":
         
     plotter = Plotter(save_fig=False)
     if plot_pred_state:
-        plotter.plot_data(file_path, plot_indices=special_indices, status=Status.TRACK_TRAJ, special_indices=special_indices) # Status.TRACK_TRAJ
+        plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices) 
     else:
-        plotter.plot_data(file_path, plot_indices=plot_indices, status=Status.TRACK_TRAJ) # Status.TRACK_TRAJ
+        plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
 
     #plotter.plot_all_frequency_spectrums(file_path, plot_indices=plot_indices, status=status, threshold_freq=3)

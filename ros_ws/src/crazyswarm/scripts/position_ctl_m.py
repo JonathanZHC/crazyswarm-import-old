@@ -130,12 +130,17 @@ class MPCSolver:
         # Define charactoristics of MPC solver
         ocp.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
         ocp.solver_options.integrator_type = 'ERK'
-        ocp.solver_options.nlp_solver_type = 'SQP_RTI' # OR 'SQP_RTI'
+        ocp.solver_options.nlp_solver_type = 'SQP' # OR 'SQP_RTI'
+
+        # Warm starting for first QP solving in SQP
+        ocp.solver_options.warm_start = 0
 
         # Define other hyperparameters in SQP solving
-        ocp.solver_options.nlp_solver_max_iter = 20
+        ocp.solver_options.nlp_solver_max_iter = 10
         ocp.solver_options.nlp_solver_tol_stat = 1E-5
         ocp.solver_options.nlp_solver_tol_eq = 1E-5
+        ocp.solver_options.nlp_solver_tol_ineq = 1E-5
+        ocp.solver_options.nlp_solver_tol_comp = 1E-5
         #ocp.solver_options.num_threads_in_batch_solve = 12
 
         '''Cost function setting'''
@@ -225,10 +230,6 @@ class PositionController:
         self.MPC_dim_input = self.solver_obj.dim_input
         self.MPC_dim_output = self.solver_obj.dim_output
 
-        # Internal parameter for warm starting
-        #self.prev_solution_x = np.zeros((self.MPC_N, self.MPC_dim_state))
-        #self.prev_solution_u = np.zeros((self.MPC_N, self.MPC_dim_input))
-
         # Parameters for time recording
         self.counter = int(0)
         self.ave_cycle_time = float(0.0)
@@ -244,11 +245,6 @@ class PositionController:
         yref[:, :self.MPC_dim_output] = target_state_arr[:self.MPC_N, :]
         for i in range(self.MPC_N):
             self.solver_obj.solver.set(i, "yref", yref[i, :])
-
-            # Warm starting: initialize a policy for SQP
-            #self.solver_obj.solver.set(i, "u", self.prev_solution_u[i])
-            #self.solver_obj.solver.set(i, "x", self.prev_solution_x[i])
-
         # last yref has different shape (dim = 4), must be initialized individually
         self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, :]) 
 
@@ -273,10 +269,6 @@ class PositionController:
         "----------for test----------"
         
 
-        # save for warm starting
-        #for i in range(self.MPC_N): 
-        #    self.prev_solution_u[i] = self.solver_obj.solver.get(i, "u")
-        #    self.prev_solution_x[i] = self.solver_obj.solver.get(i, "x")
 
 
         "----------for test----------"

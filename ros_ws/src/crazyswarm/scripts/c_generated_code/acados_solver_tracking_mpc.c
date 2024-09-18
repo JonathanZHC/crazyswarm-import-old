@@ -42,6 +42,8 @@
 
 
 
+
+
 #include "acados_solver_tracking_mpc.h"
 
 #define NX     TRACKING_MPC_NX
@@ -145,7 +147,7 @@ void tracking_mpc_acados_create_set_plan(ocp_nlp_plan_t* nlp_solver_plan, const 
     *  plan
     ************************************************/
 
-    nlp_solver_plan->nlp_solver = SQP_RTI;
+    nlp_solver_plan->nlp_solver = SQP;
 
     nlp_solver_plan->ocp_qp_solver_plan.qp_solver = PARTIAL_CONDENSING_HPIPM;
 
@@ -325,15 +327,22 @@ void tracking_mpc_acados_create_setup_functions(tracking_mpc_solver_capsule* cap
 
 
 
+
+
     // explicit ode
-    capsule->forw_vde_casadi = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
+    capsule->expl_vde_forw = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
     for (int i = 0; i < N; i++) {
-        MAP_CASADI_FNC(forw_vde_casadi[i], tracking_mpc_expl_vde_forw);
+        MAP_CASADI_FNC(expl_vde_forw[i], tracking_mpc_expl_vde_forw);
     }
 
     capsule->expl_ode_fun = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
     for (int i = 0; i < N; i++) {
         MAP_CASADI_FNC(expl_ode_fun[i], tracking_mpc_expl_ode_fun);
+    }
+
+    capsule->expl_vde_adj = (external_function_external_param_casadi *) malloc(sizeof(external_function_external_param_casadi)*N);
+    for (int i = 0; i < N; i++) {
+        MAP_CASADI_FNC(expl_vde_adj[i], tracking_mpc_expl_vde_adj);
     }
 
 
@@ -386,8 +395,9 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     /**** Dynamics ****/
     for (int i = 0; i < N; i++)
     {
-        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_forw", &capsule->forw_vde_casadi[i]);
+        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_forw", &capsule->expl_vde_forw[i]);
         ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_ode_fun", &capsule->expl_ode_fun[i]);
+        ocp_nlp_dynamics_model_set_external_param_fun(nlp_config, nlp_dims, nlp_in, i, "expl_vde_adj", &capsule->expl_vde_adj[i]);
     }
 
     /**** Cost ****/
@@ -563,12 +573,12 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     
     lbu[0] = 0.13525931330136065;
     ubu[0] = 0.6373621798607251;
-    lbu[1] = -0.7;
-    ubu[1] = 0.7;
-    lbu[2] = -0.7;
-    ubu[2] = 0.7;
-    lbu[3] = -0.7;
-    ubu[3] = 0.7;
+    lbu[1] = -1;
+    ubu[1] = 1;
+    lbu[2] = -1;
+    ubu[2] = 1;
+    lbu[3] = -1;
+    ubu[3] = 1;
 
     for (int i = 0; i < N; i++)
     {
@@ -613,12 +623,12 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     ubx[4] = 3;
     lbx[5] = -3;
     ubx[5] = 3;
-    lbx[6] = -0.7;
-    ubx[6] = 0.7;
-    lbx[7] = -0.7;
-    ubx[7] = 0.7;
-    lbx[8] = -0.7;
-    ubx[8] = 0.7;
+    lbx[6] = -1;
+    ubx[6] = 1;
+    lbx[7] = -1;
+    ubx[7] = 1;
+    lbx[8] = -1;
+    ubx[8] = 1;
 
     for (int i = 1; i < N; i++)
     {
@@ -713,20 +723,48 @@ int with_solution_sens_wrt_params = false;
 
     int nlp_solver_ext_qp_res = 0;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "ext_qp_res", &nlp_solver_ext_qp_res);
+    int log_primal_step_norm = false;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "log_primal_step_norm", &log_primal_step_norm);
+
+    double nlp_solver_tol_min_step_norm = 0;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_min_step_norm", &nlp_solver_tol_min_step_norm);
     // set HPIPM mode: should be done before setting other QP solver options
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_hpipm_mode", "BALANCE");
 
 
 
 
-    int as_rti_iter = 1;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "as_rti_iter", &as_rti_iter);
+    // set SQP specific options
+    double nlp_solver_tol_stat = 0.00001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_stat", &nlp_solver_tol_stat);
 
-    int as_rti_level = 4;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "as_rti_level", &as_rti_level);
+    double nlp_solver_tol_eq = 0.00001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_eq", &nlp_solver_tol_eq);
 
-    int rti_log_residuals = 0;
-    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "rti_log_residuals", &rti_log_residuals);
+    double nlp_solver_tol_ineq = 0.00001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_ineq", &nlp_solver_tol_ineq);
+
+    double nlp_solver_tol_comp = 0.00001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_comp", &nlp_solver_tol_comp);
+
+    int nlp_solver_max_iter = 10;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "max_iter", &nlp_solver_max_iter);
+
+    // set options for adaptive Levenberg-Marquardt Update
+    bool with_adaptive_levenberg_marquardt = false;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "with_adaptive_levenberg_marquardt", &with_adaptive_levenberg_marquardt);
+
+    double adaptive_levenberg_marquardt_lam = 5;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "adaptive_levenberg_marquardt_lam", &adaptive_levenberg_marquardt_lam);
+
+    double adaptive_levenberg_marquardt_mu_min = 0.0000000000000001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "adaptive_levenberg_marquardt_mu_min", &adaptive_levenberg_marquardt_mu_min);
+
+    double adaptive_levenberg_marquardt_mu0 = 0.001;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "adaptive_levenberg_marquardt_mu0", &adaptive_levenberg_marquardt_mu0);
+
+    bool eval_residual_at_max_iter = false;
+    ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "eval_residual_at_max_iter", &eval_residual_at_max_iter);
 
     int qp_solver_iter_max = 50;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "qp_iter_max", &qp_solver_iter_max);
@@ -942,6 +980,15 @@ int tracking_mpc_acados_update_params_sparse(tracking_mpc_solver_capsule * capsu
 }
 
 
+int tracking_mpc_acados_set_p_global_and_precompute_dependencies(tracking_mpc_solver_capsule* capsule, double* data, int data_len)
+{
+
+    printf("p_global is not defined, tracking_mpc_acados_set_p_global_and_precompute_dependencies does nothing.\n");
+}
+
+
+
+
 int tracking_mpc_acados_solve(tracking_mpc_solver_capsule* capsule)
 {
     // solve NLP
@@ -982,15 +1029,19 @@ int tracking_mpc_acados_free(tracking_mpc_solver_capsule* capsule)
     // dynamics
     for (int i = 0; i < N; i++)
     {
-        external_function_external_param_casadi_free(&capsule->forw_vde_casadi[i]);
+        external_function_external_param_casadi_free(&capsule->expl_vde_forw[i]);
         external_function_external_param_casadi_free(&capsule->expl_ode_fun[i]);
+        external_function_external_param_casadi_free(&capsule->expl_vde_adj[i]);
     }
-    free(capsule->forw_vde_casadi);
+    free(capsule->expl_vde_adj);
+    free(capsule->expl_vde_forw);
     free(capsule->expl_ode_fun);
 
     // cost
 
     // constraints
+
+
 
     return 0;
 }
@@ -1004,19 +1055,29 @@ void tracking_mpc_acados_print_stats(tracking_mpc_solver_capsule* capsule)
     ocp_nlp_get(capsule->nlp_config, capsule->nlp_solver, "stat_m", &stat_m);
 
     
-    double stat[240];
+    double stat[120];
     ocp_nlp_get(capsule->nlp_config, capsule->nlp_solver, "statistics", stat);
 
     int nrow = nlp_iter+1 < stat_m ? nlp_iter+1 : stat_m;
 
 
-    printf("iter\tqp_stat\tqp_iter\n");
+    printf("iter\tres_stat\tres_eq\t\tres_ineq\tres_comp\tqp_stat\tqp_iter\talpha");
+    if (stat_n > 8)
+        printf("\t\tqp_res_stat\tqp_res_eq\tqp_res_ineq\tqp_res_comp");
+    printf("\n");
     for (int i = 0; i < nrow; i++)
     {
         for (int j = 0; j < stat_n + 1; j++)
         {
-            tmp_int = (int) stat[i + j * nrow];
-            printf("%d\t", tmp_int);
+            if (j == 0 || j == 5 || j == 6)
+            {
+                tmp_int = (int) stat[i + j * nrow];
+                printf("%d\t", tmp_int);
+            }
+            else
+            {
+                printf("%e\t", stat[i + j * nrow]);
+            }
         }
         printf("\n");
     }

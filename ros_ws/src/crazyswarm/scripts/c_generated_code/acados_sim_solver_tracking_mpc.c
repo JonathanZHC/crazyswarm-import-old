@@ -77,17 +77,17 @@ int tracking_mpc_acados_sim_create(tracking_mpc_sim_solver_capsule * capsule)
 
     
     // explicit ode
-    capsule->sim_forw_vde_casadi = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
+    capsule->sim_expl_vde_forw = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
     capsule->sim_vde_adj_casadi = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
     capsule->sim_expl_ode_fun_casadi = (external_function_param_casadi *) malloc(sizeof(external_function_param_casadi));
 
-    capsule->sim_forw_vde_casadi->casadi_fun = &tracking_mpc_expl_vde_forw;
-    capsule->sim_forw_vde_casadi->casadi_n_in = &tracking_mpc_expl_vde_forw_n_in;
-    capsule->sim_forw_vde_casadi->casadi_n_out = &tracking_mpc_expl_vde_forw_n_out;
-    capsule->sim_forw_vde_casadi->casadi_sparsity_in = &tracking_mpc_expl_vde_forw_sparsity_in;
-    capsule->sim_forw_vde_casadi->casadi_sparsity_out = &tracking_mpc_expl_vde_forw_sparsity_out;
-    capsule->sim_forw_vde_casadi->casadi_work = &tracking_mpc_expl_vde_forw_work;
-    external_function_param_casadi_create(capsule->sim_forw_vde_casadi, np);
+    capsule->sim_expl_vde_forw->casadi_fun = &tracking_mpc_expl_vde_forw;
+    capsule->sim_expl_vde_forw->casadi_n_in = &tracking_mpc_expl_vde_forw_n_in;
+    capsule->sim_expl_vde_forw->casadi_n_out = &tracking_mpc_expl_vde_forw_n_out;
+    capsule->sim_expl_vde_forw->casadi_sparsity_in = &tracking_mpc_expl_vde_forw_sparsity_in;
+    capsule->sim_expl_vde_forw->casadi_sparsity_out = &tracking_mpc_expl_vde_forw_sparsity_out;
+    capsule->sim_expl_vde_forw->casadi_work = &tracking_mpc_expl_vde_forw_work;
+    external_function_param_casadi_create(capsule->sim_expl_vde_forw, np);
 
     capsule->sim_vde_adj_casadi->casadi_fun = &tracking_mpc_expl_vde_adj;
     capsule->sim_vde_adj_casadi->casadi_n_in = &tracking_mpc_expl_vde_adj_n_in;
@@ -153,7 +153,7 @@ int tracking_mpc_acados_sim_create(tracking_mpc_sim_solver_capsule * capsule)
 
     // model functions
     tracking_mpc_sim_config->model_set(tracking_mpc_sim_in->model,
-                 "expl_vde_forw", capsule->sim_forw_vde_casadi);
+                 "expl_vde_forw", capsule->sim_expl_vde_forw);
     tracking_mpc_sim_config->model_set(tracking_mpc_sim_in->model,
                  "expl_vde_adj", capsule->sim_vde_adj_casadi);
     tracking_mpc_sim_config->model_set(tracking_mpc_sim_in->model,
@@ -237,10 +237,10 @@ int tracking_mpc_acados_sim_free(tracking_mpc_sim_solver_capsule *capsule)
     sim_config_destroy(capsule->acados_sim_config);
 
     // free external function
-    external_function_param_casadi_free(capsule->sim_forw_vde_casadi);
+    external_function_param_casadi_free(capsule->sim_expl_vde_forw);
     external_function_param_casadi_free(capsule->sim_vde_adj_casadi);
     external_function_param_casadi_free(capsule->sim_expl_ode_fun_casadi);
-    free(capsule->sim_forw_vde_casadi);
+    free(capsule->sim_expl_vde_forw);
     free(capsule->sim_vde_adj_casadi);
     free(capsule->sim_expl_ode_fun_casadi);
 
@@ -258,7 +258,7 @@ int tracking_mpc_acados_sim_update_params(tracking_mpc_sim_solver_capsule *capsu
             " External function has %i parameters. Exiting.\n", np, casadi_np);
         exit(1);
     }
-    capsule->sim_forw_vde_casadi[0].set_param(capsule->sim_forw_vde_casadi, p);
+    capsule->sim_expl_vde_forw[0].set_param(capsule->sim_expl_vde_forw, p);
     capsule->sim_vde_adj_casadi[0].set_param(capsule->sim_vde_adj_casadi, p);
     capsule->sim_expl_ode_fun_casadi[0].set_param(capsule->sim_expl_ode_fun_casadi, p);
 
