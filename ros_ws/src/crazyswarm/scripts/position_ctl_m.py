@@ -133,7 +133,7 @@ class MPCSolver:
         ocp.solver_options.nlp_solver_type = 'SQP' # OR 'SQP_RTI'
 
         # Warm starting for first QP solving in SQP
-        ocp.solver_options.warm_start = 0
+        #ocp.solver_options.warm_start = 0
 
         # Define other hyperparameters in SQP solving
         ocp.solver_options.nlp_solver_max_iter = 10
@@ -154,7 +154,7 @@ class MPCSolver:
         W[:model_obj.dim_output, :model_obj.dim_output] = np.eye(model_obj.dim_output) * Q
         W[model_obj.dim_output:, model_obj.dim_output:] = np.eye(model_obj.dim_input) * R
         # 因为thrust比其他状态高太多数量级，防止模型为了采用更小的thrust而降低对其他状态的跟踪能力
-        #W[-1, -1] = 0 
+        W[-4, -4] = 1
 
         # Define weight matrix for stage and terminal cost
         ocp.cost.W = W # Stage cost 
@@ -315,6 +315,8 @@ class PositionController:
 
         # Call API function for Acados to solve MPC problem on current time step
         input_desired, yaw_predicted = self.mpc_controller(current_state, target_output_arr)
+
+        print("input: ", input_desired)
 
         current_thrust = input_desired[0]
         euler_desired = input_desired[1:]

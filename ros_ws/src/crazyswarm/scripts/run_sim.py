@@ -107,12 +107,12 @@ if __name__ == "__main__":
         data_index_b_acc = plane2indices_acc[traj_plane[1]]
         data_index_c_acc = plane2indices_acc[traj_plane[2]]
 
-        plot_indices = [#(data_index_a, data_index_b), 
-                        #(data_index_b, data_index_c), 
-                        #(data_index_a, data_index_c), 
-                        #data_index_a, 
-                        #data_index_b,
-                        #data_index_c,
+        plot_indices = [(data_index_a, data_index_b), 
+                        (data_index_b, data_index_c), 
+                        (data_index_a, data_index_c), 
+                        data_index_a, 
+                        data_index_b,
+                        data_index_c,
                         #data_index_a_vel,
                         #data_index_b_vel,
                         #data_index_c_vel,

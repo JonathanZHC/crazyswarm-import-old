@@ -412,7 +412,7 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     W_0[1+(NY0) * 1] = 1;
     W_0[2+(NY0) * 2] = 1;
     W_0[3+(NY0) * 3] = 1;
-    W_0[4+(NY0) * 4] = 0.1;
+    W_0[4+(NY0) * 4] = 1;
     W_0[5+(NY0) * 5] = 0.1;
     W_0[6+(NY0) * 6] = 0.1;
     W_0[7+(NY0) * 7] = 0.1;
@@ -448,7 +448,7 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     W[1+(NY) * 1] = 1;
     W[2+(NY) * 2] = 1;
     W[3+(NY) * 3] = 1;
-    W[4+(NY) * 4] = 0.1;
+    W[4+(NY) * 4] = 1;
     W[5+(NY) * 5] = 0.1;
     W[6+(NY) * 6] = 0.1;
     W[7+(NY) * 7] = 0.1;

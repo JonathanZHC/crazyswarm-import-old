@@ -534,7 +534,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.1,
+                1.0,
                 0.0,
                 0.0,
                 0.0
@@ -616,7 +616,7 @@
                 0.0,
                 0.0,
                 0.0,
-                0.1,
+                1.0,
                 0.0,
                 0.0,
                 0.0
@@ -1070,7 +1070,6 @@
             0.016666666666666666,
             0.016666666666666666
         ],
-        "warm_start": 0,
         "with_adaptive_levenberg_marquardt": false,
         "with_solution_sens_wrt_params": false,
         "with_value_sens_wrt_params": false
