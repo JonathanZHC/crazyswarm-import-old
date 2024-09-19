@@ -62,7 +62,7 @@ if __name__ == "__main__":
     sample_time = 0.01  # Sampling time, only for plotting
     traj_plane = "xyz"  # Trajectory plane
     mode = '3D' # 2D or 3D
-    plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
+    plot_pred_state = True # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.YAW] # Must be given in form of ndarray
 
     if mode == '2D':

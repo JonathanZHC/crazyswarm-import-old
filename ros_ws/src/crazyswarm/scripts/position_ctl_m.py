@@ -130,12 +130,14 @@ class MPCSolver:
         # Define charactoristics of MPC solver
         ocp.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
         ocp.solver_options.integrator_type = 'ERK'
-        ocp.solver_options.nlp_solver_type = 'SQP_RTI' # OR 'SQP_RTI'
+        ocp.solver_options.nlp_solver_type = 'SQP' # OR 'SQP_RTI'
 
         # Define other hyperparameters in SQP solving
         ocp.solver_options.nlp_solver_max_iter = 20
         ocp.solver_options.nlp_solver_tol_stat = 1E-5
         ocp.solver_options.nlp_solver_tol_eq = 1E-5
+        ocp.solver_options.nlp_solver_tol_ineq = 1E-5
+        ocp.solver_options.nlp_solver_tol_comp = 1E-5
         #ocp.solver_options.num_threads_in_batch_solve = 12
 
         '''Cost function setting'''
