@@ -579,12 +579,12 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     
     lbu[0] = 0.13525931330136065;
     ubu[0] = 0.6373621798607251;
-    lbu[1] = -1;
-    ubu[1] = 1;
-    lbu[2] = -1;
-    ubu[2] = 1;
-    lbu[3] = -1;
-    ubu[3] = 1;
+    lbu[1] = -1.57;
+    ubu[1] = 1.57;
+    lbu[2] = -1.57;
+    ubu[2] = 1.57;
+    lbu[3] = -1.57;
+    ubu[3] = 1.57;
 
     for (int i = 0; i < N; i++)
     {
@@ -632,11 +632,11 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     ubx[4] = 3;
     lbx[5] = -3;
     ubx[5] = 3;
-    lbx[6] = -1;
+    lbx[6] = -1.57;
     ubx[6] = 1;
-    lbx[7] = -1;
+    lbx[7] = -1.57;
     ubx[7] = 1;
-    lbx[8] = -1;
+    lbx[8] = -1.57;
     ubx[8] = 1;
     lbx[9] = -2;
     ubx[9] = 2;
@@ -967,10 +967,10 @@ int tracking_mpc_acados_update_params_sparse(tracking_mpc_solver_capsule * capsu
 }
 
 
-int tracking_mpc_acados_set_p_global_and_precompute_dependencies(tracking_mpc_solver_capsule* capsule, double* data, int data_len)
+int tracking_mpc_acados_set_p_global(tracking_mpc_solver_capsule* capsule, double* data, int data_len)
 {
 
-    printf("p_global is not defined, tracking_mpc_acados_set_p_global_and_precompute_dependencies does nothing.\n");
+    printf("p_global is not defined, tracking_mpc_acados_set_p_global does nothing.\n");
 }
 
 

@@ -145,7 +145,7 @@ ACADOS_SYMBOL_EXPORT int tracking_mpc_acados_update_time_steps(tracking_mpc_solv
 ACADOS_SYMBOL_EXPORT int tracking_mpc_acados_update_qp_solver_cond_N(tracking_mpc_solver_capsule * capsule, int qp_solver_cond_N);
 ACADOS_SYMBOL_EXPORT int tracking_mpc_acados_update_params(tracking_mpc_solver_capsule * capsule, int stage, double *value, int np);
 ACADOS_SYMBOL_EXPORT int tracking_mpc_acados_update_params_sparse(tracking_mpc_solver_capsule * capsule, int stage, int *idx, double *p, int n_update);
-ACADOS_SYMBOL_EXPORT int tracking_mpc_acados_set_p_global_and_precompute_dependencies(tracking_mpc_solver_capsule* capsule, double* data, int data_len);
+ACADOS_SYMBOL_EXPORT int tracking_mpc_acados_set_p_global(tracking_mpc_solver_capsule* capsule, double* data, int data_len);
 
 ACADOS_SYMBOL_EXPORT int tracking_mpc_acados_solve(tracking_mpc_solver_capsule * capsule);
 ACADOS_SYMBOL_EXPORT void tracking_mpc_acados_batch_solve(tracking_mpc_solver_capsule ** capsules, int N_batch);
