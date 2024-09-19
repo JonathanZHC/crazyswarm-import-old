@@ -57,7 +57,7 @@ if __name__ == "__main__":
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
     num_cycles = 2.0  # Number of cycles to complete
-    scaling = 1.5  # Trajectory scaling
+    scaling = 1.0  # Trajectory scaling
     total_time = 10.0  # Trajectory length in seconds
     sample_time = 0.01  # Sampling time, only for plotting
     traj_plane = "xyz"  # Trajectory plane
@@ -80,19 +80,19 @@ if __name__ == "__main__":
     plot_indices = [#(data_index_a, data_index_b), 
                     #(data_index_b, data_index_c), 
                     #(data_index_a, data_index_c), 
-                    data_index_a, 
-                    data_index_b,
-                    data_index_c,
-                    data_index_a_vel,
-                    data_index_b_vel,
-                    data_index_c_vel,
+                    #data_index_a, 
+                    #data_index_b,
+                    #data_index_c,
+                    #data_index_a_vel,
+                    #data_index_b_vel,
+                    #data_index_c_vel,
                     DataVarIndex.ROLL,
                     DataVarIndex.PITCH, 
                     DataVarIndex.YAW,                   
-                    #DataVarIndex.CMD_THRUST,
-                    DataVarIndex.ROLL_RATE,
-                    DataVarIndex.YAW_RATE,
-                    DataVarIndex.PITCH_RATE,
+                    DataVarIndex.CMD_THRUST,
+                    #DataVarIndex.ROLL_RATE,
+                    #DataVarIndex.YAW_RATE,
+                    #DataVarIndex.PITCH_RATE,
                     ] 
 
     # Initialize trajectory generator

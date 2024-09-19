@@ -318,10 +318,6 @@ class PositionController:
         current_thrust = input_desired[0]
         euler_desired = input_desired[1:]
         
-        # Check on current thrust
-        current_thrust = max(current_thrust, 0.3 * self.params.quad.m * self.params.quad.g) # incase too small deceleration
-        current_thrust = min(current_thrust, 1.8 * self.params.quad.m * self.params.quad.g) # incase too large acceleration
-        
         # Transform thrust_desired back into pwm_desired
         pwm_desired = thrust2pwm(current_thrust)
 
