@@ -23,14 +23,14 @@ class MPCModel:
         GRAVITY = 9.806
 
         # Import model parameters
-        model_file = '/home/haocheng/Experiments/figure_8/merge_model.json'
+        model_file = '/home/haocheng/Experiments/figure_8/double_integrator_merge_model.json'
         with open(model_file) as file:
             identified_model = json.load(file)
 
         params_acc = identified_model['params_acc']
-        params_pitch_rate = identified_model['params_pitch_rate']
-        params_roll_rate = identified_model['params_roll_rate']
-        params_yaw_rate = identified_model['params_yaw_rate']
+        params_pitch_rate_rate = identified_model['params_pitch_rate_rate']
+        params_roll_rate_rate = identified_model['params_roll_rate_rate']
+        params_yaw_rate_rate = identified_model['params_yaw_rate_rate']
     
         # Define dimension of state, input and output vector
         # State vector: [px, py, pz, vx, vy, vz, r, p, y]
@@ -39,7 +39,8 @@ class MPCModel:
         self.dim_state_position = 3
         self.dim_state_velocity = 3
         self.dim_state_euler = 3
-        self.dim_state = self.dim_state_position + self.dim_state_velocity + self.dim_state_euler
+        self.dim_state_euler_rate = 3
+        self.dim_state = self.dim_state_position + self.dim_state_velocity + self.dim_state_euler + self.dim_state_euler_rate
         self.dim_output = 4
         self.dim_input = 4
 
@@ -54,36 +55,31 @@ class MPCModel:
         r = SX.sym('r')
         p = SX.sym('p')
         y = SX.sym('y')
-        f_collective = SX.sym('f_collective')
+        r_rate = SX.sym('r_rate')
+        p_rate = SX.sym('p_rate')
+        y_rate = SX.sym('y_rate')
+        f_collective = SX.sym('f_collective') # defined in force, not PWM
         r_cmd = SX.sym('r_cmd')
         p_cmd = SX.sym('p_cmd')
         y_cmd = SX.sym('y_cmd')
 
         # define state and input vector
-        states = vertcat(px, py, pz, vx, vy, vz, r, p, y)
+        states = vertcat(px, py, pz, vx, vy, vz, r, p, y, r_rate, p_rate, y_rate)
         inputs = vertcat(f_collective, r_cmd, p_cmd, y_cmd)
 
         # Define nonlinear system dynamics
-        '''
-        f = vertcat(vx, 
-                    vy, 
-                    vz, 
-                    (params_acc[0] * f_collective + params_acc[1]) * sin(p),
-                    -(params_acc[0] * f_collective + params_acc[1]) * sin(r) * cos(p),
-                    (params_acc[0] * f_collective + params_acc[1]) * cos(r) * cos(p) - GRAVITY,
-                    params_roll_rate[0] * r + params_roll_rate[1] * r_cmd,
-                    params_pitch_rate[0] * p + params_pitch_rate[1] * p_cmd,
-                    params_yaw_rate[0] * y + params_yaw_rate[1] * y_cmd)
-        '''
         f = vertcat(vx, 
                     vy, 
                     vz, 
                     (params_acc[0] * f_collective + params_acc[1]) * (cos(r) * sin(p) * cos(y) + sin(r) * sin(y)),
                     (params_acc[0] * f_collective + params_acc[1]) * (cos(r) * sin(p) * sin(y) - sin(r) * cos(y)),
                     (params_acc[0] * f_collective + params_acc[1]) * cos(r) * cos(p) - GRAVITY,
-                    params_roll_rate[0] * r + params_roll_rate[1] * r_cmd,
-                    params_pitch_rate[0] * p + params_pitch_rate[1] * p_cmd,
-                    params_yaw_rate[0] * y + params_yaw_rate[1] * y_cmd)
+                    r_rate,
+                    p_rate,
+                    y_rate,
+                    params_roll_rate_rate[0] * r + params_roll_rate_rate[1] * r_rate + params_roll_rate_rate[2] * r_cmd,
+                    params_pitch_rate_rate[0] * p + params_pitch_rate_rate[1] * p_rate + params_pitch_rate_rate[2] * p_cmd,
+                    params_yaw_rate_rate[0] * y + params_yaw_rate_rate[1] * y_rate + params_yaw_rate_rate[2] * y_cmd)
 
         # Initialize the nonlinear model for NMPC formulation
         self.model = AcadosModel()
@@ -130,7 +126,7 @@ class MPCSolver:
         # Define charactoristics of MPC solver
         ocp.solver_options.qp_solver = 'PARTIAL_CONDENSING_HPIPM'
         ocp.solver_options.integrator_type = 'ERK'
-        ocp.solver_options.nlp_solver_type = 'SQP' # OR 'SQP_RTI'
+        ocp.solver_options.nlp_solver_type = 'SQP_RTI' # OR 'SQP_RTI'
 
         # Warm starting for first QP solving in SQP
         #ocp.solver_options.warm_start = 0
@@ -153,8 +149,6 @@ class MPCSolver:
         W = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_output + model_obj.dim_input))
         W[:model_obj.dim_output, :model_obj.dim_output] = np.eye(model_obj.dim_output) * Q
         W[model_obj.dim_output:, model_obj.dim_output:] = np.eye(model_obj.dim_input) * R
-        # 因为thrust比其他状态高太多数量级，防止模型为了采用更小的thrust而降低对其他状态的跟踪能力
-        W[-4, -4] = 1
 
         # Define weight matrix for stage and terminal cost
         ocp.cost.W = W # Stage cost 
@@ -165,7 +159,7 @@ class MPCSolver:
         # Define output matrix
         Vx = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_state))
         Vx[:model_obj.dim_state_position, :model_obj.dim_state_position] = np.eye(model_obj.dim_state_position)
-        Vx[model_obj.dim_state_position, -1] = np.eye(1)
+        Vx[model_obj.dim_state_position, -4] = np.eye(1) # to project yaw
         ocp.cost.Vx = Vx
         # Define breakthrough matrix
         Vu = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_input)) 
@@ -176,7 +170,7 @@ class MPCSolver:
         # Define output matrix
         Vx_e = np.zeros((model_obj.dim_output, model_obj.dim_state))
         Vx_e[:model_obj.dim_state_position, :model_obj.dim_state_position] = np.eye(model_obj.dim_state_position)
-        Vx_e[model_obj.dim_state_position, -1] = np.eye(model_obj.dim_output - model_obj.dim_state_position)
+        Vx_e[model_obj.dim_state_position, -4] = np.eye(1) # to project yaw
         ocp.cost.Vx_e = Vx_e
 
         '''Constraints setting'''
@@ -213,7 +207,7 @@ class MPCSolver:
 
 
 class PositionController:
-    def __init__(self, quad=None, conrtol_freq=30):
+    def __init__(self, quad=None, conrtol_freq=60):
         if not quad is None:
             # get parameters
             self.params = quad.params
@@ -247,6 +241,7 @@ class PositionController:
             self.solver_obj.solver.set(i, "yref", yref[i, :])
         # last yref has different shape (dim = 4), must be initialized individually
         self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, :]) 
+        # OR self.solver_obj.solver.set("yref_e", target_state_arr[-1, :]) 
 
         # Solve MPC problem
         start = timeit.default_timer() # To record cycle time for each iteration
@@ -254,7 +249,8 @@ class PositionController:
         if status != 0:
             #raise Exception(f"ACADOS failed to solve a feasible solution，return status: {status}")
             rospy.loginfo(f"ACADOS failed to solve a feasible solution，return status: {status}!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!")
-        
+            '''TODO: define backup action'''
+
 
         "----------for test----------"
         # Calculate average cycle time
@@ -281,21 +277,22 @@ class PositionController:
         # get optimal policy and return as new input
         u_opt = self.solver_obj.solver.get(0, "u")
 
+
         "----------for test----------"
         # Get the 9th state (index 8) for all time steps
         state_predicted = []
         for i in range(self.MPC_N + 1):
             # Get the state for the i-th time step
             x_i = self.solver_obj.solver.get(i, "x")
-            # Append the 9th state (index 8) to the list
-            state_predicted.append(x_i[8]) # change here to display intermidiate prediction of different state
+            # Change index here to display intermidiate prediction of different state
+            state_predicted.append(x_i[8]) 
         state_predicted = np.array(state_predicted)
         "----------for test----------"
 
 
         return u_opt, state_predicted
 
-    def compute_action(self, measured_pos, measured_rpy, measured_vel, desired_pos_arr, desired_vel_arr, desired_yaw_arr):
+    def compute_action(self, measured_pos, measured_vel, measured_rpy, measured_rpy_rate, desired_pos_arr, desired_vel_arr, desired_yaw_arr):
         """Compute the thrust and euler angles for the drone to reach the desired position.
         
         Args:
@@ -310,7 +307,7 @@ class PositionController:
             euler_desired (np.array): desired euler angles
         """
 
-        current_state = np.hstack((measured_pos, measured_vel, measured_rpy))
+        current_state = np.hstack((measured_pos, measured_vel, measured_rpy, measured_rpy_rate))
         target_output_arr = np.hstack((desired_pos_arr, desired_yaw_arr))
 
         # Call API function for Acados to solve MPC problem on current time step

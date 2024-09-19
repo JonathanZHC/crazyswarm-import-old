@@ -49,11 +49,11 @@ extern "C" {
   #endif
 #endif
 
-static const casadi_int casadi_s0[13] = {9, 1, 0, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8};
+static const casadi_int casadi_s0[16] = {12, 1, 0, 12, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11};
 static const casadi_int casadi_s1[8] = {4, 1, 0, 4, 0, 1, 2, 3};
 static const casadi_int casadi_s2[3] = {0, 0, 0};
 
-/* tracking_mpc_expl_ode_fun:(i0[9],i1[4],i2[])->(o0[9]) */
+/* tracking_mpc_expl_ode_fun:(i0[12],i1[4],i2[])->(o0[12]) */
 static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw, casadi_real* w, int mem) {
   casadi_real a0, a1, a10, a2, a3, a4, a5, a6, a7, a8, a9;
   a0=arg[0]? arg[0][3] : 0;
@@ -92,27 +92,42 @@ static int casadi_f0(const casadi_real** arg, casadi_real** res, casadi_int* iw,
   a2=9.8059999999999992e+00;
   a0=(a0-a2);
   if (res[0]!=0) res[0][5]=a0;
-  a0=-3.9838192661383212e+00;
-  a0=(a0*a1);
-  a1=4.1045273095440491e+00;
-  a2=arg[1]? arg[1][1] : 0;
-  a1=(a1*a2);
-  a0=(a0+a1);
+  a0=arg[0]? arg[0][9] : 0;
   if (res[0]!=0) res[0][6]=a0;
-  a0=-6.0208969267640278e+00;
-  a0=(a0*a3);
-  a3=6.2392491454267196e+00;
-  a1=arg[1]? arg[1][2] : 0;
-  a3=(a3*a1);
-  a0=(a0+a3);
-  if (res[0]!=0) res[0][7]=a0;
-  a0=-2.2133365361700860e-03;
-  a0=(a0*a5);
-  a5=1.5722000263747617e+00;
-  a3=arg[1]? arg[1][3] : 0;
-  a5=(a5*a3);
-  a0=(a0+a5);
-  if (res[0]!=0) res[0][8]=a0;
+  a2=arg[0]? arg[0][10] : 0;
+  if (res[0]!=0) res[0][7]=a2;
+  a4=arg[0]? arg[0][11] : 0;
+  if (res[0]!=0) res[0][8]=a4;
+  a8=-2.5651473451232217e+01;
+  a8=(a8*a1);
+  a1=-2.5580262532002482e+00;
+  a1=(a1*a0);
+  a8=(a8+a1);
+  a1=1.7524089241776338e+01;
+  a0=arg[1]? arg[1][1] : 0;
+  a1=(a1*a0);
+  a8=(a8+a1);
+  if (res[0]!=0) res[0][9]=a8;
+  a8=-6.1628637406162163e+01;
+  a8=(a8*a3);
+  a3=-7.2058744720662347e+00;
+  a3=(a3*a2);
+  a8=(a8+a3);
+  a3=5.1903354910673720e+01;
+  a2=arg[1]? arg[1][2] : 0;
+  a3=(a3*a2);
+  a8=(a8+a3);
+  if (res[0]!=0) res[0][10]=a8;
+  a8=-1.2544174350349687e+01;
+  a8=(a8*a5);
+  a5=-1.2945379372787613e-02;
+  a5=(a5*a4);
+  a8=(a8+a5);
+  a5=4.3839961280232046e+01;
+  a4=arg[1]? arg[1][3] : 0;
+  a5=(a5*a4);
+  a8=(a8+a5);
+  if (res[0]!=0) res[0][11]=a8;
   return 0;
 }
 

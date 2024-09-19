@@ -34,7 +34,7 @@
 #include "acados_c/sim_interface.h"
 #include "acados_c/external_function_interface.h"
 
-#define TRACKING_MPC_NX     9
+#define TRACKING_MPC_NX     12
 #define TRACKING_MPC_NZ     0
 #define TRACKING_MPC_NU     4
 #define TRACKING_MPC_NP     0

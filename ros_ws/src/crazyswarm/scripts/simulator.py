@@ -61,47 +61,6 @@ class RK4Integrator(Integrator):
         return cs.Function('rk4', [self.x, self.u], [rungeKutta], ['x', 'u'], ['x_next'])
 
 
-class QuadXZDynamics:
-
-    def __init__(self, model_file):
-        # Open the json file containing the model parameters
-        with open(model_file) as file:
-            model = json.load(file)
-
-        # Assign the model parameters
-        self.params_acc = model['params_acc']
-        self.params_pitch_rate = model['params_pitch_rate']
-
-        # Set the state and input dimensions
-        self.state_dim = 5
-        self.input_dim = 2
-
-        # Create the symbolic variables
-        self.x = cs.MX.sym('x', self.state_dim)
-        self.u = cs.MX.sym('u', self.input_dim)
-
-    def dynamics(self):
-        # Unpack the state variables
-        x = self.x[0]
-        z = self.x[1]
-        pitch = self.x[2]
-        x_dot = self.x[3]
-        z_dot = self.x[4]
-
-        # Unpack the input variables
-        cmd_pitch = self.u[0]
-        cmd_thrust = self.u[1]
-
-        pitch_rate = self.params_pitch_rate[0] * pitch + self.params_pitch_rate[1] * cmd_pitch
-        transformed_thrust = self.params_acc[0] * cmd_thrust + self.params_acc[1]
-        x_ddot = cs.sin(pitch) * transformed_thrust
-        z_ddot = cs.cos(pitch) * transformed_thrust - GRAVITY
-
-        return cs.vertcat(x_dot, z_dot, pitch_rate, x_ddot, z_ddot)
-    
-    def dynamics_func(self):
-        return cs.Function('dynamics', [self.x, self.u], [self.dynamics()], ['x', 'u'], ['x_dot'])
-    
 class Quad3DDynamics:
 
     def __init__(self, model_file):
@@ -111,12 +70,12 @@ class Quad3DDynamics:
 
         # Assign the model parameters
         self.params_acc = model['params_acc']
-        self.params_pitch_rate = model['params_pitch_rate']
-        self.params_roll_rate = model['params_roll_rate']
-        self.params_yaw_rate = model['params_yaw_rate']
+        self.params_pitch_rate_rate = model['params_pitch_rate_rate']
+        self.params_roll_rate_rate = model['params_roll_rate_rate']
+        self.params_yaw_rate_rate = model['params_yaw_rate_rate']
 
         # Set the state and input dimensions
-        self.state_dim = 9
+        self.state_dim = 12
         self.input_dim = 4
 
         # Create the symbolic variables
@@ -128,12 +87,15 @@ class Quad3DDynamics:
         x = self.x[0]
         y = self.x[1]
         z = self.x[2]
-        roll = self.x[3]
-        pitch = self.x[4]
-        yaw = self.x[5]
-        x_dot = self.x[6]
-        y_dot = self.x[7]
-        z_dot = self.x[8]
+        x_dot = self.x[3]
+        y_dot = self.x[4]
+        z_dot = self.x[5]
+        roll = self.x[6]
+        pitch = self.x[7]
+        yaw = self.x[8]
+        roll_rate = self.x[9]
+        pitch_rate = self.x[10]
+        yaw_rate = self.x[11]
 
         # Unpack the input variables
         cmd_roll = self.u[0]
@@ -141,9 +103,9 @@ class Quad3DDynamics:
         cmd_yaw = self.u[2]
         cmd_thrust = self.u[3]
 
-        roll_rate = self.params_roll_rate[0] * roll + self.params_roll_rate[1] * cmd_roll
-        pitch_rate = self.params_pitch_rate[0] * pitch + self.params_pitch_rate[1] * cmd_pitch
-        yaw_rate = self.params_yaw_rate[0] * yaw + self.params_yaw_rate[1] * cmd_yaw
+        roll_rate_rate = self.params_roll_rate_rate[0] * roll + self.params_roll_rate_rate[1] * roll_rate + self.params_roll_rate_rate[2] * cmd_roll
+        pitch_rate_rate = self.params_pitch_rate_rate[0] * pitch + self.params_pitch_rate_rate[1] * pitch_rate + self.params_pitch_rate_rate[2] * cmd_pitch
+        yaw_rate_rate = self.params_yaw_rate_rate[0] * yaw + self.params_yaw_rate_rate[1] * yaw_rate + self.params_yaw_rate_rate[2] * cmd_yaw
 
         transformed_thrust = self.params_acc[0] * cmd_thrust + self.params_acc[1]
 
@@ -158,14 +120,15 @@ class Quad3DDynamics:
         z_ddot = cs.cos(roll) * cs.cos(pitch) * transformed_thrust - GRAVITY
         
 
-        return cs.vertcat(x_dot, y_dot, z_dot, roll_rate, pitch_rate, yaw_rate, x_ddot, y_ddot, z_ddot)
+        return cs.vertcat(x_dot, y_dot, z_dot, x_ddot, y_ddot, z_ddot, roll_rate, pitch_rate, yaw_rate, roll_rate_rate, pitch_rate_rate, yaw_rate_rate)
     
     def dynamics_func(self):
         return cs.Function('dynamics', [self.x, self.u], [self.dynamics()], ['x', 'u'], ['x_dot'])
     
+    
 class Simulator: # called by cf_sim.launch
 
-    def __init__(self, cf_id_dec, sim_frequency, model_file, x0, state):
+    def __init__(self, cf_id_dec, sim_frequency, model_file, x0):
         self.cmd_vel_topic = cf_id_dec + "/cmd_vel"
         self.cmd_vel_sub = rospy.Subscriber(self.cmd_vel_topic, Twist, self.cmd_vel_callback)
         self.state_topic = f'/estimated_state'
@@ -177,12 +140,7 @@ class Simulator: # called by cf_sim.launch
         self.sim_frequency = sim_frequency
         self.delta_t = 1.0 / sim_frequency
 
-        self.state = state
-
-        if self.state == '2D':
-            self.dynamics = QuadXZDynamics(model_file)
-        elif self.state == '3D':
-            self.dynamics = Quad3DDynamics(model_file)
+        self.dynamics = Quad3DDynamics(model_file)
 
         self.x_cs = self.dynamics.x
         self.u_cs = self.dynamics.u
@@ -204,6 +162,10 @@ class Simulator: # called by cf_sim.launch
         self.pos = np.array([0.0, 0.0, 0.0], dtype=np.float64)
         self.vel = np.array([0.0, 0.0, 0.0], dtype=np.float64)
         self.acc = np.array([0.0, 0.0, 0.0], dtype=np.float64)
+
+        # Initialize rotations (euler angles).
+        self.euler = np.array([0.0, 0.0, 0.0], dtype=np.float64)
+        self.euler_rate = np.array([0.0, 0.0, 0.0], dtype=np.float64)
 
         # Initialize rotations (quaternions).
         self.quat = np.array([0.0, 0.0, 0.0, 1.0], dtype=np.float64)
@@ -236,21 +198,14 @@ class Simulator: # called by cf_sim.launch
             x_traj = self.integrator.simulate(self.x0, u0, 1)
             self.x0 = np.array(x_traj[-1])
 
-        if self.state == '2D':
-            self.pos = np.array([self.x0[0, 0], 0.0, self.x0[1, 0]], dtype=np.float64)
-            self.vel = np.array([self.x0[3, 0], 0.0, self.x0[4, 0]], dtype=np.float64)
-        
-            euler = [0.0, self.x0[2, 0], 0.0]
-            quat = euler2quat(euler[0], euler[1], euler[2])
-            self.quat = np.array(quat, dtype=np.float64)
 
-        elif self.state == '3D':
-            self.pos = np.array([self.x0[0, 0], self.x0[1, 0], self.x0[2, 0]], dtype=np.float64)
-            self.vel = np.array([self.x0[6, 0], self.x0[7, 0], self.x0[8, 0]], dtype=np.float64)
+        self.pos = np.array([self.x0[0, 0], self.x0[1, 0], self.x0[2, 0]], dtype=np.float64)
+        self.vel = np.array([self.x0[3, 0], self.x0[4, 0], self.x0[5, 0]], dtype=np.float64)
         
-            euler = [self.x0[3, 0], self.x0[4, 0], self.x0[5, 0]]
-            quat = euler2quat(euler[0], euler[1], euler[2])
-            self.quat = np.array(quat, dtype=np.float64)
+        self.euler = [self.x0[6, 0], self.x0[7, 0], self.x0[8, 0]]
+        self.euler_rate = [self.x0[9, 0], self.x0[10, 0], self.x0[11, 0]]
+        quat = euler2quat(self.euler[0], self.euler[1], self.euler[2])
+        self.quat = np.array(quat, dtype=np.float64)
 
         state = StateVector()
 
@@ -262,6 +217,9 @@ class Simulator: # called by cf_sim.launch
         state.vel = self.vel
         state.acc = self.acc
 
+        state.euler = self.euler
+        state.euler_rate = self.euler_rate
+
         state.quat = self.quat
         state.omega_g = self.omega_g
         state.omega_b = self.omega_b
@@ -272,7 +230,7 @@ class Simulator: # called by cf_sim.launch
         self.frame_id += 1
 
 
-def main(cf_id_dec, sim_frequency, model_file, x0, state):
+def main(cf_id_dec, sim_frequency, model_file, x0):
     # Initialize the ROS node
     rospy.init_node('simulator')
 
@@ -285,7 +243,7 @@ def main(cf_id_dec, sim_frequency, model_file, x0, state):
     # Create the simulator object
 
 
-    simulator = Simulator(cf_id_dec, sim_frequency, model_file, x0, state)
+    simulator = Simulator(cf_id_dec, sim_frequency, model_file, x0)
 
     while not rospy.is_shutdown():
         simulator.simulate()
@@ -316,9 +274,8 @@ if __name__ == '__main__':
     run_name = 'major-valley-78' # easy-star-3 or major-valley-78
     use_latest = False
     smoothed = False
-    state = '3D' # '2D' or '3D'
     batch = True # use batch identification or not: False or True
-    model_file = '/home/haocheng/Experiments/figure_8/merge_model.json' # file path of identified model
+    model_file = '/home/haocheng/Experiments/figure_8/double_integrator_merge_model.json' # file path of identified model
 
 
     # Load path of model
@@ -330,13 +287,13 @@ if __name__ == '__main__':
         print('running case: ', model_file)
 
 
-    # Define initial state (2D: 5 dimensioin, 3D: 9 dimension)
-    if state == '2D':
-        x0 = np.array([0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
-    elif state == '3D':
-        x0 = np.array([0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0], dtype=np.float64)
+    # Define initial state (2D: 5 dimensioin, 3D: 12 dimension)
+    x0 = np.array([0.0, 0.0, 0.0, 
+                   0.0, 0.0, 0.0, 
+                   0.0, 0.0, 0.0,
+                   0.0, 0.0, 0.0], dtype=np.float64)
     
     try:
-        main(cf_id_dec, sim_freq, model_file, x0, state)
+        main(cf_id_dec, sim_freq, model_file, x0)
     except rospy.ROSInterruptException:
         pass
