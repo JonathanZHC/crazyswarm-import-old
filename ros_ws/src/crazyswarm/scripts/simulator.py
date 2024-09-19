@@ -6,7 +6,7 @@ import casadi as cs
 import rospy
 
 
-from position_ctl_m import PositionController
+#from position_ctl_m import PIDController, MPCController
 from utils import GRAVITY, get_file_path_from_run
 from helper import deg2rad, euler2quat, quat2euler, pwm2thrust, thrust2pwm
 
@@ -193,8 +193,6 @@ class Simulator: # called by cf_sim.launch
 
         self.integrator = RK4Integrator([self.x_cs, self.u_cs], self.dynamics_func, self.delta_t)
         # self.integrator = EulerIntegrator([self.x_cs, self.u_cs], self.dynamics_func, self.delta_t)
-
-        self.pos_controller = PositionController()
 
         self.cmd = np.zeros(4)
         self.cmd_received = False
