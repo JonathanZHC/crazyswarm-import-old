@@ -57,11 +57,12 @@ if __name__ == "__main__":
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
     num_cycles = 2.0  # Number of cycles to complete
-    scaling = 1.5  # Trajectory scaling
+    scaling = 1.0  # Trajectory scaling
     total_time = 10.0  # Trajectory length in seconds
     sample_time = 0.01  # Sampling time, only for plotting
     traj_plane = "xyz"  # Trajectory plane
     mode = '3D' # 2D or 3D
+    status = Status.TRACK_TRAJ # Status.TRACK_TRAJ
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.YAW] # Must be given in form of ndarray
 
@@ -167,9 +168,9 @@ if __name__ == "__main__":
     # Plot the simulation result
     plotter = Plotter(save_fig=False)
     if plot_pred_state:
-        plotter.plot_data(file_path, plot_indices=special_indices, status=Status.TRACK_TRAJ, special_indices=special_indices) # Status.TRACK_TRAJ
+        plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices) 
     else:
-        plotter.plot_data(file_path, plot_indices=plot_indices, status=Status.TRACK_TRAJ) # Status.TRACK_TRAJ
+        plotter.plot_data(file_path, plot_indices=plot_indices, status=status)
     
 
 
