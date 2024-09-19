@@ -168,8 +168,8 @@ int tracking_mpc_acados_sim_create(tracking_mpc_sim_solver_capsule * capsule)
 
     /* initialize input */
     // x
-    double x0[9];
-    for (int ii = 0; ii < 9; ii++)
+    double x0[12];
+    for (int ii = 0; ii < 12; ii++)
         x0[ii] = 0.0;
 
     sim_in_set(tracking_mpc_sim_config, tracking_mpc_sim_dims,
@@ -185,11 +185,11 @@ int tracking_mpc_acados_sim_create(tracking_mpc_sim_solver_capsule * capsule)
                tracking_mpc_sim_in, "u", u0);
 
     // S_forw
-    double S_forw[117];
-    for (int ii = 0; ii < 117; ii++)
+    double S_forw[192];
+    for (int ii = 0; ii < 192; ii++)
         S_forw[ii] = 0.0;
-    for (int ii = 0; ii < 9; ii++)
-        S_forw[ii + ii * 9 ] = 1.0;
+    for (int ii = 0; ii < 12; ii++)
+        S_forw[ii + ii * 12 ] = 1.0;
 
 
     sim_in_set(tracking_mpc_sim_config, tracking_mpc_sim_dims,

@@ -235,7 +235,7 @@ static ocp_nlp_dims* tracking_mpc_acados_create_setup_dimensions(tracking_mpc_so
     nbx[0] = NBX0;
     nsbx[0] = 0;
     ns[0] = NS0;
-    nbxe[0] = 9;
+    nbxe[0] = 12;
     ny[0] = NY0;
     nh[0] = NH0;
     nsh[0] = NSH0;
@@ -412,10 +412,10 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     W_0[1+(NY0) * 1] = 1;
     W_0[2+(NY0) * 2] = 1;
     W_0[3+(NY0) * 3] = 1;
-    W_0[4+(NY0) * 4] = 0.1;
-    W_0[5+(NY0) * 5] = 0.1;
-    W_0[6+(NY0) * 6] = 0.1;
-    W_0[7+(NY0) * 7] = 0.1;
+    W_0[4+(NY0) * 4] = 1;
+    W_0[5+(NY0) * 5] = 1;
+    W_0[6+(NY0) * 6] = 1;
+    W_0[7+(NY0) * 7] = 1;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* Vx_0 = calloc(NY0*NX, sizeof(double));
@@ -448,10 +448,10 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     W[1+(NY) * 1] = 1;
     W[2+(NY) * 2] = 1;
     W[3+(NY) * 3] = 1;
-    W[4+(NY) * 4] = 0.1;
-    W[5+(NY) * 5] = 0.1;
-    W[6+(NY) * 6] = 0.1;
-    W[7+(NY) * 7] = 0.1;
+    W[4+(NY) * 4] = 1;
+    W[5+(NY) * 5] = 1;
+    W[6+(NY) * 6] = 1;
+    W[7+(NY) * 7] = 1;
 
     for (int i = 1; i < N; i++)
     {
@@ -526,6 +526,9 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     idxbx0[6] = 6;
     idxbx0[7] = 7;
     idxbx0[8] = 8;
+    idxbx0[9] = 9;
+    idxbx0[10] = 10;
+    idxbx0[11] = 11;
 
     double* lubx0 = calloc(2*NBX0, sizeof(double));
     double* lbx0 = lubx0;
@@ -538,7 +541,7 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     free(idxbx0);
     free(lubx0);
     // idxbxe_0
-    int* idxbxe_0 = malloc(9 * sizeof(int));
+    int* idxbxe_0 = malloc(12 * sizeof(int));
     
     idxbxe_0[0] = 0;
     idxbxe_0[1] = 1;
@@ -549,6 +552,9 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     idxbxe_0[6] = 6;
     idxbxe_0[7] = 7;
     idxbxe_0[8] = 8;
+    idxbxe_0[9] = 9;
+    idxbxe_0[10] = 10;
+    idxbxe_0[11] = 11;
     ocp_nlp_constraints_model_set(nlp_config, nlp_dims, nlp_in, 0, "idxbxe", idxbxe_0);
     free(idxbxe_0);
 
@@ -573,12 +579,12 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     
     lbu[0] = 0.13525931330136065;
     ubu[0] = 0.6373621798607251;
-    lbu[1] = -1.57;
-    ubu[1] = 1.57;
-    lbu[2] = -1.57;
-    ubu[2] = 1.57;
-    lbu[3] = -1.57;
-    ubu[3] = 1.57;
+    lbu[1] = -50;
+    ubu[1] = 50;
+    lbu[2] = -50;
+    ubu[2] = 50;
+    lbu[3] = -50;
+    ubu[3] = 50;
 
     for (int i = 0; i < N; i++)
     {
@@ -608,6 +614,9 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     idxbx[6] = 6;
     idxbx[7] = 7;
     idxbx[8] = 8;
+    idxbx[9] = 9;
+    idxbx[10] = 10;
+    idxbx[11] = 11;
     double* lubx = calloc(2*NBX, sizeof(double));
     double* lbx = lubx;
     double* ubx = lubx + NBX;
@@ -629,6 +638,12 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     ubx[7] = 1.57;
     lbx[8] = -1.57;
     ubx[8] = 1.57;
+    lbx[9] = -1.57;
+    ubx[9] = 1.57;
+    lbx[10] = -1.57;
+    ubx[10] = 1.57;
+    lbx[11] = -1.57;
+    ubx[11] = 1.57;
 
     for (int i = 1; i < N; i++)
     {
@@ -735,19 +750,19 @@ int with_solution_sens_wrt_params = false;
 
 
     // set SQP specific options
-    double nlp_solver_tol_stat = 0.00001;
+    double nlp_solver_tol_stat = 0.000001;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_stat", &nlp_solver_tol_stat);
 
-    double nlp_solver_tol_eq = 0.00001;
+    double nlp_solver_tol_eq = 0.000001;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_eq", &nlp_solver_tol_eq);
 
-    double nlp_solver_tol_ineq = 0.00001;
+    double nlp_solver_tol_ineq = 0.000001;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_ineq", &nlp_solver_tol_ineq);
 
-    double nlp_solver_tol_comp = 0.00001;
+    double nlp_solver_tol_comp = 0.000001;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "tol_comp", &nlp_solver_tol_comp);
 
-    int nlp_solver_max_iter = 20;
+    int nlp_solver_max_iter = 100;
     ocp_nlp_solver_opts_set(nlp_config, nlp_opts, "max_iter", &nlp_solver_max_iter);
 
     // set options for adaptive Levenberg-Marquardt Update
@@ -1055,7 +1070,7 @@ void tracking_mpc_acados_print_stats(tracking_mpc_solver_capsule* capsule)
     ocp_nlp_get(capsule->nlp_config, capsule->nlp_solver, "stat_m", &stat_m);
 
     
-    double stat[240];
+    double stat[1200];
     ocp_nlp_get(capsule->nlp_config, capsule->nlp_solver, "statistics", stat);
 
     int nrow = nlp_iter+1 < stat_m ? nlp_iter+1 : stat_m;
