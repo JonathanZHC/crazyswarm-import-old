@@ -218,11 +218,10 @@ class Simulator: # called by cf_sim.launch
         state.acc = self.acc
 
         state.euler = self.euler
-        state.euler_rate = self.euler_rate
 
         state.quat = self.quat
         state.omega_g = self.omega_g
-        state.omega_b = self.omega_b
+        state.omega_b = self.euler_rate
 
         # Publish state
         self.state_pub.publish(state)

@@ -89,7 +89,7 @@ class StateEstimator:
         )
         self.rpy = np.array(rpy)
         self.vel = np.array(data.vel)
-        self.rpy_rate = np.array(data.euler_rate)
+        self.rpy_rate = np.array(data.omega_b)
         self.omega_g = np.array(data.omega_g)
 
 

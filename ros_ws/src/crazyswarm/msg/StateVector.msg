@@ -16,12 +16,9 @@ float64[3] acc
 # Euler Angles (roll,pitch,yaw) [rad]
 float64[3] euler
 
-# Rate of Euler Angles (roll,pitch,yaw) [rad/s]
-float64[3] euler_rate
-
 # Angular Velocity [rad/s]
 float64[3] omega_g
-float64[3] omega_b
+float64[3] omega_b # used as euler_rate (roll_rate,pitch_rate,yaw_rate) [rad/s]
 
 # Orientation quaternion
 float64[4] quat
