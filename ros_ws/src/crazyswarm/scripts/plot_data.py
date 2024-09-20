@@ -218,9 +218,9 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    wandb_project = "test"
+    wandb_project = "tac-cbf" # test
     # Plot the entire trajectory or just the tracking part
-    status = Status.TRACK_TRAJ #status = Status.TRACK_TRAJ
+    status = Status.INTERPOLATE #status = Status.TRACK_TRAJ
 
     # Specify the indices to be plotted
     plot_indices = None
@@ -275,9 +275,9 @@ if __name__ == "__main__":
         data_index_b_vel = plane2indices_vel[traj_plane[1]]
         data_index_c_vel = plane2indices_vel[traj_plane[2]]
 
-        plot_indices = [(data_index_a, data_index_b), 
-                        (data_index_b, data_index_c), 
-                        (data_index_a, data_index_c), 
+        plot_indices = [#(data_index_a, data_index_b), 
+                        #(data_index_b, data_index_c), 
+                        #(data_index_a, data_index_c), 
                         data_index_a, 
                         data_index_b,
                         data_index_c,
@@ -295,8 +295,7 @@ if __name__ == "__main__":
         
     plotter = Plotter(save_fig=False)
     if plot_pred_state:
-        plotter.plot_data(file_path, plot_indices=special_indices, status=Status.TRACK_TRAJ, special_indices=special_indices) # Status.TRACK_TRAJ
+        plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices)
     else:
-        plotter.plot_data(file_path, plot_indices=plot_indices, status=Status.TRACK_TRAJ) # Status.TRACK_TRAJ
-
+        plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
     #plotter.plot_all_frequency_spectrums(file_path, plot_indices=plot_indices, status=status, threshold_freq=3)
