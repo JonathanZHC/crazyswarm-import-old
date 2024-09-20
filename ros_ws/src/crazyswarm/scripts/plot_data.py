@@ -200,7 +200,7 @@ class Plotter:
 if __name__ == "__main__":
     wandb_project = "test"
     # Plot the entire trajectory or just the tracking part
-    status = Status.STATIC_OBSV #status = Status.TRACK_TRAJ
+    status = None #status = Status.TRACK_TRAJ
 
     # Specify the indices to be plotted
     plot_indices = None
