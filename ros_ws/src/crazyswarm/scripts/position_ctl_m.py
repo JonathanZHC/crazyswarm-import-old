@@ -277,11 +277,11 @@ class PositionController:
 
         
         # get optimal policy and return as new input
-        #x_next = self.solver_obj.solver.get(1, "x")
-        #self.euler_prev = x_next[-3:]
-        #euler_opt = x_next[-3:]
+        x_next = self.solver_obj.solver.get(1, "x")
+        self.euler_prev = x_next[-3:]
+        euler_opt = x_next[-3:]
         u_opt = self.solver_obj.solver.get(0, "u")
-        #thrust_opt = u_opt[0]
+        thrust_opt = u_opt[0]
 
 
         "----------for test----------"
@@ -296,7 +296,7 @@ class PositionController:
         "----------for test----------"
 
 
-        return u_opt, state_predicted
+        return thrust_opt, euler_opt, state_predicted
 
     def compute_action(self, measured_pos, measured_rpy, measured_vel, desired_pos_arr, desired_vel_arr, desired_yaw_arr):
         """Compute the thrust and euler angles for the drone to reach the desired position.
@@ -317,12 +317,12 @@ class PositionController:
         target_output_arr = np.hstack((desired_pos_arr, desired_yaw_arr))
 
         # Call API function for Acados to solve MPC problem on current time step
-        u_opt, yaw_predicted = self.mpc_controller(current_state, target_output_arr)
+        current_thrust, euler_desired, yaw_predicted = self.mpc_controller(current_state, target_output_arr)
 
-        current_thrust = u_opt[0]
+        #current_thrust = u_opt[0]
 
-        euler_desired = measured_rpy + u_opt[1:] / 60
-        self.euler_prev = euler_desired
+        #euler_desired = measured_rpy + u_opt[1:] / 60
+        #self.euler_prev = euler_desired
         
         # Transform thrust_desired back into pwm_desired
         pwm_desired = thrust2pwm(current_thrust)

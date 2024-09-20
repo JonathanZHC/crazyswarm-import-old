@@ -218,7 +218,7 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    wandb_project = "test"
+    wandb_project = "tac-cbf"
     # Plot the entire trajectory or just the tracking part
     status = Status.TRACK_TRAJ #status = Status.TRACK_TRAJ
 

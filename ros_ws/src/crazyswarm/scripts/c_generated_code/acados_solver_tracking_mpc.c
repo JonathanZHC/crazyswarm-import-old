@@ -995,10 +995,10 @@ int tracking_mpc_acados_update_params_sparse(tracking_mpc_solver_capsule * capsu
 }
 
 
-int tracking_mpc_acados_set_p_global(tracking_mpc_solver_capsule* capsule, double* data, int data_len)
+int tracking_mpc_acados_set_p_global_and_precompute_dependencies(tracking_mpc_solver_capsule* capsule, double* data, int data_len)
 {
 
-    printf("p_global is not defined, tracking_mpc_acados_set_p_global does nothing.\n");
+    printf("p_global is not defined, tracking_mpc_acados_set_p_global_and_precompute_dependencies does nothing.\n");
 }
 
 
