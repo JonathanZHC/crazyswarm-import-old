@@ -165,7 +165,7 @@ if __name__ == "__main__":
 
     # Plot the simulation result
     plotter = Plotter(save_fig=False)
-    plotter.plot_data(file_path, plot_indices=plot_indices, status=status)
+    plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
 
 
 
