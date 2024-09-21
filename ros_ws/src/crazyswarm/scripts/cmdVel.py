@@ -565,7 +565,7 @@ if __name__ == "__main__":
     velocity = 0.3
     height = 0.7 # 1.5 for Trajectory 4
     target_yaw_deg = 0.0
-    observation_duration = 0.0
+    observation_duration = 2.0
 
     # Static observation stage, especially for KF
     quad_motion.static_observation(observation_duration)

@@ -204,67 +204,6 @@ class ModelIdentifier:
     def smooth_data_path(self): # get_methode, read-only
         return self.smooth_data_path_
 
-    def identify_model_2D(self, input_indices, output_indices, status=None):
-        """Identify the model parameters from the smoothed data."""
-        self.input_indices = input_indices
-        self.output_indices = output_indices
-
-        if status is not None: 
-            # Only plot the data that matches the status
-            self.smoother.data = self.smoother.data[self.smoother.data[:, DataVarIndex.STATUS] == status.value]
-            print("Used samples: ", self.smoother.data.shape[0])
-
-        # First, identify the model parameters that map thrust to acceleration in x and z
-        # Assume a model of the form:
-        # normed_acc = params[0] * normed_thrust + params[1]
-        # where normed_acc = sqrt(acc_x^2 + (acc_z + g)^2) and normed_thrust = pwm2thrust(thrust_cmd)
-
-        # Get the input data for acceleration in x and z
-        thrust_data = self.smoother.data[:, DataVarIndex.CMD_THRUST]
-        normed_thrust = np.expand_dims(thrust_data, axis=1)
-        # Add a column of ones to the input data
-        normed_thrust = np.hstack((normed_thrust, np.ones((normed_thrust.shape[0], 1))))
-        
-        # Get the acceleration data in x and z
-        acc_indices = [DataVarIndex.ACC_X, DataVarIndex.ACC_Z]
-        acc_data = self.smoother.data[:, acc_indices]
-        acc_data[:, 1] += GRAVITY
-        normed_acc = np.linalg.norm(acc_data, axis=1)
-
-        # Identify the linear model parameters using least squares
-        self.params["acc"] = np.linalg.lstsq(normed_thrust, normed_acc, rcond=None)[0]
-
-        # Second, identify the model parameters that map the pitch and commanded pitch to the pitch rate
-        '''
-        # Assume a model of the form:
-        # pitch_rate = params[0] * pitch + params[1] * cmd_pitch
-        # where pitch_rate = d(pitch)/dt
-
-        # # Get the input data for pitch and commanded pitch
-        pitch_data = self.smoother.data[:, DataVarIndex.PITCH]S
-        cmd_pitch_data = self.smoother.data[:, DataVarIndex.CMD_PITCH]
-        pitch_data = np.expand_dims(pitch_data, axis=1)
-        cmd_pitch_data = np.expand_dims(cmd_pitch_data, axis=1)
-        pitch_inputs = np.hstack((pitch_data, cmd_pitch_data))
-
-        # # Get the pitch rate data
-        pitch_rate_data = self.smoother.data[:, DataVarIndex.PITCH_RATE]
-        pitch_rate_data = np.expand_dims(pitch_rate_data, axis=1)
-
-        # # Identify the linear model parameters using least squares
-        self.params["pitch_rate"] = np.linalg.lstsq(pitch_inputs, pitch_rate_data, rcond=None)[0]
-        '''
-
-        # The following apprxoimation works better than the identified model
-        # The approximation assumes that the commanded pitch is reached at the next time step
-        # Assume a model of the form:
-        # pitch_rate = (pitch_next - pitch) / dt = (cmd_pitch - pitch) / dt
-        self.params["pitch_rate"] = np.array([- 1.0 / self.smoother.dt, 1.0 / self.smoother.dt])
-
-        # Save the identified model parameters
-        identified_model_path = self.smooth_data_path.replace("_smoothed.csv", "_model.json")
-        self.save_model(identified_model_path)
-
     def identify_model_3D(self, input_indices, output_indices, status=None):
         """Identify the model parameters from the smoothed data."""
         # initialize I/O of system dynamic, will be used in check_model
@@ -276,7 +215,7 @@ class ModelIdentifier:
             self.smoother.data = self.smoother.data[self.smoother.data[:, DataVarIndex.STATUS] == status.value]
             print("Used samples: ", self.smoother.data.shape[0])
 
-        
+
         # # First, identify the model parameters that map thrust to acceleration in x and z
         # Assume a model of the form:
         # normed_acc = params[0] * normed_thrust + params[1] = [normed_thrust(k), 1] * [params[0]; params[1]]
@@ -357,173 +296,6 @@ class ModelIdentifier:
         identified_model_path = self.smooth_data_path.replace("_smoothed.csv", "_model.json")
         self.save_model(identified_model_path)
 
-    def check_model_2D(self):
-        """Check the identified model parameters by comparing the output data with the model."""
-
-        for index in self.output_indices:
-
-            print("Index: ", index)  # current checking index
-
-            # Verification of 1-order-derivative variables: cmd_pitch -> pitch -> pitch_rate, compare with cmd_pitch
-            for key, value in self.smoother.match_first_derivative.items():
-                if index == value:
-                    print("Updating index: ", key)
-
-                    # Integrate the identified output
-                    A = self.params['pitch_rate'][0]
-                    B = self.params['pitch_rate'][1]
-
-                    # discretize the continious identified function
-                    A_d = expm(A * self.smoother.dt)
-                    B_d = B / A * (A_d - 1)
-
-                    # convert roll/yaw/pitch to cmd_roll/yaw/pitch
-                    cmd_key = self.smoother.match_cmd[key]
-
-                    # Propagate the model forward
-                    for j in range(1, self.smoother.data.shape[0]):
-                        # Continious identified function: pitch_rate = params[0] * pitch + params[1] * cmd_pitch = A * pitch + B * cmd_pitch
-                        # Discretized identified function: pitch[j] = Ad * pitch[j - 1] + Bd * cmd_pitch[j - 1]
-                        self.smoother.data[j, key] = A_d * self.smoother.data[j - 1, key] + B_d * self.smoother.data[j - 1, cmd_key]
-                    
-                    # Verification of pitch_rate
-                    data = A * self.smoother.data[:, key] + B * self.smoother.data[:, cmd_key]
-                    data = np.expand_dims(data, axis=1)
-                    self.smoother.data[:, index] = data[:, 0]
-            
-            # Verification of non-derivative variables: cmd_thrust -> ACC_X, ACC_Z
-            if index in [DataVarIndex.ACC_X, DataVarIndex.ACC_Z]:
-                trig_func = None
-                if DataVarIndex.ACC_X == index:
-                    trig_func = np.sin
-                elif DataVarIndex.ACC_Z == index:
-                    trig_func = np.cos
-                else:
-                    raise ValueError("Output indices do not contain the correct acceleration index")
-                # transformation from model identification
-                data = self.params['acc'][0] * self.smoother.data[:, DataVarIndex.CMD_THRUST] 
-                if len(self.params['acc']) == 2:
-                    data += self.params['acc'][1]
-
-                data = data * trig_func(self.smoother.data[:, DataVarIndex.PITCH])
-                if DataVarIndex.ACC_Z == index:
-                    data -= GRAVITY
-                data = np.expand_dims(data, axis=1)
-                self.smoother.data[:, index] = data[:, 0]
-
-            # Verification of 2-order-derivative variables: acc_x -> vel_x -> x, compare with real velocity and position of x
-            #                                               acc_z -> vel_z -> z, compare with real velocity and position of z
-            for key, value in self.smoother.match_second_derivative.items():
-                if index == value:
-                    print("Updating index (second derivative): ", key)
-                    first_integration_index = key
-
-                    A_d = 1.0
-                    B_d = self.smoother.dt  
-
-                    for key2, value2 in self.smoother.match_first_derivative.items():
-                        if first_integration_index == key2:
-                            print("Updating index 2: ", value2)
-                            # Integrate the identified output: acc -> vel
-                            for j in range(1, self.smoother.data.shape[0]):
-                                self.smoother.data[j, value2] = A_d * self.smoother.data[j - 1, value2] + B_d * self.smoother.data[j - 1, index] 
-                            break
-                    
-                    # Integrate again: vel -> pos
-                    for j in range(1, self.smoother.data.shape[0]):
-                        self.smoother.data[j, key] = A_d * self.smoother.data[j - 1, key] + B_d * self.smoother.data[j - 1, value2]
-                    break
-
-        # Save the updated data
-        updated_data_path = self.smooth_data_path.replace("_smoothed.csv", "_model.csv")
-        self.smoother.save_data(updated_data_path)
-
-        return updated_data_path
-
-    def check_model_3D(self):
-        """Check the identified model parameters by comparing the output data with the model."""
-
-        for index in self.output_indices:
-
-            print("Index: ", index)  # current checking index
-
-            # Verification of 1-order-derivative variables: cmd_pitch -> pitch -> pitch_rate, compare with cmd_pitch
-            #                                               cmd_roll -> roll -> roll_rate, compare with cmd_roll
-            #                                               cmd_yaw -> yaw -> yaw_rate, compare with cmd_yaw
-            for key, value in self.smoother.match_first_derivative.items():
-                if index == value:
-                    print("Updating index: ", key)
-
-                    # Integrate the identified output
-                    A = self.params['pitch_rate'][0]
-                    B = self.params['pitch_rate'][1]
-                    A_d = expm(A * self.smoother.dt)
-                    B_d = B / A * (A_d - 1)
-
-                    # convert roll/yaw/pitch to cmd_roll/yaw/pitch
-                    cmd_key = self.smoother.match_cmd[key]
-
-                    # Propagate the model forward
-                    for j in range(1, self.smoother.data.shape[0]):
-                        # Continious identified function: pitch_rate = params[0] * pitch + params[1] * cmd_pitch = A * pitch + B * cmd_pitch
-                        # Discretized identified function: pitch[j] = Ad * pitch[j - 1] + Bd * cmd_pitch[j - 1]
-                        self.smoother.data[j, key] = A_d * self.smoother.data[j - 1, key] + B_d * self.smoother.data[j - 1, cmd_key]
-
-                    # Verification of roll/yaw/pitch_rate
-                    data = A * self.smoother.data[:, key] + B * self.smoother.data[:, cmd_key]
-                    data = np.expand_dims(data, axis=1)
-                    self.smoother.data[:, index] = data[:, 0]
-
-            # Verification of non-derivative variables: cmd_thrust -> ACC_X, ACC_Y, ACC_Z
-            if index in [DataVarIndex.ACC_X, DataVarIndex.ACC_Y, DataVarIndex.ACC_Z]:
-
-                data = self.params['acc'][0] * self.smoother.data[:, DataVarIndex.CMD_THRUST] 
-                if len(self.params['acc']) == 2: 
-                    data += self.params['acc'][1]
-
-                if DataVarIndex.ACC_X == index:
-                    data = data * np.sin(self.smoother.data[:, DataVarIndex.PITCH]) 
-                elif DataVarIndex.ACC_Y == index:
-                    data = - data * np.sin(self.smoother.data[:, DataVarIndex.ROLL]) * np.cos(self.smoother.data[:, DataVarIndex.PITCH])
-                elif DataVarIndex.ACC_Z == index:
-                    data = data * np.cos(self.smoother.data[:, DataVarIndex.ROLL]) * np.cos(self.smoother.data[:, DataVarIndex.PITCH])
-                    data -= GRAVITY
-                else:
-                    raise ValueError("Output indices do not contain the correct acceleration index")
-
-                data = np.expand_dims(data, axis=1)
-                self.smoother.data[:, index] = data[:, 0]
-
-            # Verification of 2-order-derivative variables: acc_x -> vel_x -> x, compare with real velocity and position of x
-            #                                               acc_y -> vel_y -> y, compare with real velocity and position of y
-            #                                               acc_z -> vel_z -> z, compare with real velocity and position of z
-            for key, value in self.smoother.match_second_derivative.items():
-                if index == value:
-                    print("Updating index (second derivative): ", key)
-                    first_integration_index = key
-
-                    A_d = 1.0
-                    B_d = self.smoother.dt  
-
-                    for key2, value2 in self.smoother.match_first_derivative.items():
-                        if first_integration_index == key2:
-                            print("Updating index 2: ", value2)
-                            # Integrate the identified output: acc -> vel
-                            for j in range(1, self.smoother.data.shape[0]):
-                                self.smoother.data[j, value2] = A_d * self.smoother.data[j - 1, value2] + B_d * self.smoother.data[j - 1, index] 
-                            break
-                    
-                    # Integrate again: vel -> pos
-                    for j in range(1, self.smoother.data.shape[0]):
-                        self.smoother.data[j, key] = A_d * self.smoother.data[j - 1, key] + B_d * self.smoother.data[j - 1, value2]
-                    break
-
-        # Save the updated data
-        updated_data_path = self.smooth_data_path.replace("_smoothed.csv", "_model.csv")
-        self.smoother.save_data(updated_data_path)
-
-        return updated_data_path
-
     def save_model(self, file_path):
         """Save the identified model parameters to a json file."""
         # Save the model parameters, data indices and the used data file names
@@ -553,7 +325,7 @@ if __name__ == "__main__":
     run_name = 'dashing-water-47' # easy-star-3 or major-valley-78
     use_latest = False
     smoothed = False
-    mode = '3D' # define the dimension of trajectory: '2D' or '3D'
+
     batch = True # use batch identification or not: False or True
 
     # group 1
@@ -561,14 +333,6 @@ if __name__ == "__main__":
                    , 'cool-music-34', 'treasured-waterfall-61', 'vocal-mountain-62', 'wandering-bush-63', 'earthy-water-21', 'glad-haze-65'
                    , 'legendary-aardvark-66', 'balmy-resonance-67', 'frosty-elevator-69', 'kind-firebrand-56', 'sandy-blaze-46', 'sunny-bird-22'
                    , 'rosy-star-72', 'flowing-spaceship-73', 'quiet-leaf-75', 'young-breeze-36', 'stoic-dragon-57', 'vague-snowball-27']
-    
-    '''
-    # group 2
-    run_name_list = ['whole-cherry-23', 'colorful-sun-58', 'lemon-grass-24', 'apricot-darkness-33', 'fluent-night-59', 'gentle-dew-60'
-                   , 'cool-music-34', 'treasured-waterfall-61', 'radiant-brook-25', 'wandering-bush-63', 'apricot-serenity-37', 'glad-haze-65'
-                   , 'legendary-aardvark-66', 'balmy-resonance-67', 'earthy-water-21', 'kind-firebrand-56', 'sandy-blaze-46', 'sunny-bird-22'
-                   , 'lunar-mountain-35', 'flowing-spaceship-73', 'youthful-pine-26', 'expert-leaf-74', 'stoic-dragon-57', 'vague-snowball-27']
-    '''
 
     file_path_merged_smoothed = '/home/haocheng/Experiments/figure_8/merge_smoothed.csv' # define name of new file of merged data
     
@@ -613,81 +377,42 @@ if __name__ == "__main__":
         # Initialize the object of class ModelIdentifier
         model_identifier = ModelIdentifier(file_path_batch, smooth_indices, status=None, batch=batch, file_path_merged=file_path_merged_smoothed)
 
+    # Select the indices based on the trajectory plane
+    data_index_a = plane2indices_pos[traj_plane[0]]
+    data_index_b = plane2indices_pos[traj_plane[1]]
+    data_index_c = plane2indices_pos[traj_plane[2]]
+    data_index_a_vel = plane2indices_vel[traj_plane[0]]
+    data_index_b_vel = plane2indices_vel[traj_plane[1]]
+    data_index_c_vel = plane2indices_vel[traj_plane[2]]
+    data_index_a_acc = plane2indices_acc[traj_plane[0]]
+    data_index_b_acc = plane2indices_acc[traj_plane[1]]
+    data_index_c_acc = plane2indices_acc[traj_plane[2]]
 
-    # Identify the model and plot identified result (choose identify methode according to dimension)
-    if mode == '2D':
-        # Select the indices based on the trajectory plane
-        data_index_a = plane2indices_pos[traj_plane[0]]
-        data_index_b = plane2indices_pos[traj_plane[1]]
-        data_index_a_vel = plane2indices_vel[traj_plane[0]]
-        data_index_b_vel = plane2indices_vel[traj_plane[1]]
-        data_index_a_acc = plane2indices_acc[traj_plane[0]]
-        data_index_b_acc = plane2indices_acc[traj_plane[1]]
+    plot_indices = [#(data_index_a, data_index_b), 
+                    #(data_index_b, data_index_c), 
+                    #(data_index_a, data_index_c), 
+                    #data_index_a, 
+                    #data_index_b,
+                    #data_index_c,
+                    #data_index_a_vel,
+                    #data_index_b_vel,
+                    #data_index_c_vel,
+                    DataVarIndex.ROLL,
+                    DataVarIndex.YAW,
+                    DataVarIndex.PITCH,                    
+                    DataVarIndex.CMD_THRUST,
+                    DataVarIndex.ROLL_RATE,
+                    DataVarIndex.YAW_RATE,
+                    DataVarIndex.PITCH_RATE,
+                    #data_index_a_acc,
+                    #data_index_b_acc,
+                    #data_index_c_acc,
+                    ]
 
-        plot_indices = [(data_index_a, data_index_b), 
-                        data_index_a, 
-                        data_index_b,
-                        DataVarIndex.PITCH,
-                        data_index_a_vel,
-                        data_index_b_vel,
-                        DataVarIndex.CMD_THRUST,
-                        DataVarIndex.PITCH_RATE,
-                        data_index_a_acc,
-                        data_index_b_acc,]   
-
-        input_indices = [DataVarIndex.CMD_THRUST, DataVarIndex.CMD_PITCH]
-        # The order of the output indices is important: the first output index should be the pitch rate, because the other indices use the pitch
-        output_indices = [DataVarIndex.PITCH_RATE, DataVarIndex.ACC_X, DataVarIndex.ACC_Z]
-        model_identifier.identify_model_2D(input_indices, output_indices, status=Status.TRACK_TRAJ)
-        model_output_path = model_identifier.check_model_2D()
-
-    elif mode == '3D':
-        # Select the indices based on the trajectory plane
-        data_index_a = plane2indices_pos[traj_plane[0]]
-        data_index_b = plane2indices_pos[traj_plane[1]]
-        data_index_c = plane2indices_pos[traj_plane[2]]
-        data_index_a_vel = plane2indices_vel[traj_plane[0]]
-        data_index_b_vel = plane2indices_vel[traj_plane[1]]
-        data_index_c_vel = plane2indices_vel[traj_plane[2]]
-        data_index_a_acc = plane2indices_acc[traj_plane[0]]
-        data_index_b_acc = plane2indices_acc[traj_plane[1]]
-        data_index_c_acc = plane2indices_acc[traj_plane[2]]
-
-        '''
-        plot_indices = [(data_index_a, data_index_b), 
-                        (data_index_b, data_index_c), 
-                        (data_index_a, data_index_c), 
-                        data_index_a, 
-                        data_index_b,
-                        data_index_c,
-                        data_index_a_vel,
-                        data_index_b_vel,
-                        data_index_c_vel,
-                        DataVarIndex.ROLL,
-                        DataVarIndex.YAW,
-                        DataVarIndex.PITCH,                    
-                        DataVarIndex.CMD_THRUST,
-                        DataVarIndex.ROLL_RATE,
-                        DataVarIndex.YAW_RATE,
-                        DataVarIndex.PITCH_RATE,
-                        data_index_a_acc,
-                        data_index_b_acc,
-                        data_index_c_acc,]
-        '''
-        
-        plot_indices = [
-                        DataVarIndex.ROLL,
-                        DataVarIndex.YAW,
-                        DataVarIndex.PITCH,                    
-                        DataVarIndex.ROLL_RATE,
-                        DataVarIndex.YAW_RATE,
-                        DataVarIndex.PITCH_RATE,
-                        ]
-
-        input_indices = [DataVarIndex.CMD_THRUST, DataVarIndex.CMD_ROLL, DataVarIndex.CMD_YAW, DataVarIndex.CMD_PITCH]
-        # The order of the output indices is important: the first output index should be the pitch rate, because the other indices use the pitch
-        output_indices = [DataVarIndex.PITCH_RATE, DataVarIndex.ROLL_RATE, DataVarIndex.YAW_RATE, DataVarIndex.ACC_X, DataVarIndex.ACC_Y, DataVarIndex.ACC_Z]
-        model_identifier.identify_model_3D(input_indices, output_indices, status=Status.TRACK_TRAJ)
+    input_indices = [DataVarIndex.CMD_THRUST, DataVarIndex.CMD_ROLL, DataVarIndex.CMD_YAW, DataVarIndex.CMD_PITCH]
+    # The order of the output indices is important: the first output index should be the pitch rate, because the other indices use the pitch
+    output_indices = [DataVarIndex.PITCH_RATE, DataVarIndex.ROLL_RATE, DataVarIndex.YAW_RATE, DataVarIndex.ACC_X, DataVarIndex.ACC_Y, DataVarIndex.ACC_Z]
+    model_identifier.identify_model_3D(input_indices, output_indices, status=Status.TRACK_TRAJ)
 
 
     # plot all data: raw -> smoothed -> simulation
@@ -702,9 +427,4 @@ if __name__ == "__main__":
         file_path_smoothed = model_identifier.smooth_data_path
         print("Plotting data from: ", file_path_smoothed)
         plotter.plot_data(file_path_smoothed, plot_indices, status=Status.TRACK_TRAJ)
-
-        # Plot the simulated output based on identified model parameters
-        model_output_path = model_identifier.check_model_3D()
-        print("Plotting data from: ", model_output_path)
-        plotter.plot_data(model_output_path, plot_indices, status=Status.TRACK_TRAJ)
     
