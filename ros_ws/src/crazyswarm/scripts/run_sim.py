@@ -57,80 +57,50 @@ if __name__ == "__main__":
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
     num_cycles = 2.0  # Number of cycles to complete
-    scaling = 1.0  # Trajectory scaling
+    scaling = 0.6  # Trajectory scaling
     total_time = 10.0  # Trajectory length in seconds
     sample_time = 0.01  # Sampling time, only for plotting
     traj_plane = "xyz"  # Trajectory plane
-    mode = '3D' # 2D or 3D
     status = None # Status.TRACK_TRAJ
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.YAW] # Must be given in form of ndarray
 
-    if mode == '2D':
+    # Select the indices based on the trajectory plane
+    data_index_a = plane2indices_pos[traj_plane[0]]
+    data_index_b = plane2indices_pos[traj_plane[1]]
+    data_index_c = plane2indices_pos[traj_plane[2]]
+    data_index_a_vel = plane2indices_vel[traj_plane[0]]
+    data_index_b_vel = plane2indices_vel[traj_plane[1]]
+    data_index_c_vel = plane2indices_vel[traj_plane[2]]
+    data_index_a_acc = plane2indices_acc[traj_plane[0]]
+    data_index_b_acc = plane2indices_acc[traj_plane[1]]
+    data_index_c_acc = plane2indices_acc[traj_plane[2]]
 
-        # Select the indices based on the trajectory plane
-        data_index_a = plane2indices_pos[traj_plane[0]]
-        data_index_b = plane2indices_pos[traj_plane[1]]
-        data_index_a_vel = plane2indices_vel[traj_plane[0]]
-        data_index_b_vel = plane2indices_vel[traj_plane[1]]
-        data_index_a_acc = plane2indices_acc[traj_plane[0]]
-        data_index_b_acc = plane2indices_acc[traj_plane[1]]
+    plot_indices = [(data_index_a, data_index_b), 
+                    (data_index_b, data_index_c), 
+                    (data_index_a, data_index_c), 
+                    data_index_a, 
+                    data_index_b,
+                    data_index_c,
+                    data_index_a_vel,
+                    data_index_b_vel,
+                    data_index_c_vel,
+                    DataVarIndex.ROLL,
+                    DataVarIndex.PITCH, 
+                    DataVarIndex.YAW,                   
+                    DataVarIndex.CMD_THRUST,
+                    #DataVarIndex.ROLL_RATE,
+                    #DataVarIndex.YAW_RATE,
+                    #DataVarIndex.PITCH_RATE,
+                    ] 
 
-        plot_indices = [(data_index_a, data_index_b), 
-                        data_index_a, 
-                        data_index_b,
-                        DataVarIndex.PITCH,
-                        data_index_a_vel,
-                        data_index_b_vel,
-                        DataVarIndex.CMD_THRUST,
-                        DataVarIndex.PITCH_RATE,]   
-
-        # Initialize trajectory generator
-        traj = TrajectoryGenerator2DPeriodicMotion(traj_type=traj_type,
-                                                    num_cycles=num_cycles,
-                                                    scaling=scaling,
-                                                    traj_length=total_time,
-                                                    sample_time=sample_time,
-                                                    traj_plane=traj_plane)
-
-    elif mode == '3D':
-
-        # Select the indices based on the trajectory plane
-        data_index_a = plane2indices_pos[traj_plane[0]]
-        data_index_b = plane2indices_pos[traj_plane[1]]
-        data_index_c = plane2indices_pos[traj_plane[2]]
-        data_index_a_vel = plane2indices_vel[traj_plane[0]]
-        data_index_b_vel = plane2indices_vel[traj_plane[1]]
-        data_index_c_vel = plane2indices_vel[traj_plane[2]]
-        data_index_a_acc = plane2indices_acc[traj_plane[0]]
-        data_index_b_acc = plane2indices_acc[traj_plane[1]]
-        data_index_c_acc = plane2indices_acc[traj_plane[2]]
-
-        plot_indices = [#(data_index_a, data_index_b), 
-                        #(data_index_b, data_index_c), 
-                        #(data_index_a, data_index_c), 
-                        #data_index_a, 
-                        #data_index_b,
-                        #data_index_c,
-                        #data_index_a_vel,
-                        #data_index_b_vel,
-                        #data_index_c_vel,
-                        DataVarIndex.ROLL,
-                        DataVarIndex.PITCH, 
-                        DataVarIndex.YAW,                   
-                        DataVarIndex.CMD_THRUST,
-                        #DataVarIndex.ROLL_RATE,
-                        #DataVarIndex.YAW_RATE,
-                        #DataVarIndex.PITCH_RATE,
-                        ] 
-
-        # Initialize trajectory generator
-        traj = TrajectoryGenerator3DPeriodicMotion(traj_type=traj_type,
-                                                    num_cycles=num_cycles,
-                                                    scaling=scaling,
-                                                    traj_length=total_time,
-                                                    sample_time=sample_time,
-                                                    traj_plane=traj_plane)
+    # Initialize trajectory generator
+    traj = TrajectoryGenerator3DPeriodicMotion(traj_type=traj_type,
+                                                num_cycles=num_cycles,
+                                                scaling=scaling,
+                                                traj_length=total_time,
+                                                sample_time=sample_time,
+                                                traj_plane=traj_plane)
 
     wandb.init(project='tac-cbf', 
                config={'file_path': file_path, 

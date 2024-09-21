@@ -218,25 +218,14 @@ class Plotter:
 
 
 if __name__ == "__main__":
-    wandb_project = "tac-cbf" # test
+    wandb_project = "test" # test
     # Plot the entire trajectory or just the tracking part
-    status = Status.INTERPOLATE #status = Status.TRACK_TRAJ
-
-    # Specify the indices to be plotted
-    plot_indices = None
-    # plot_indices = [(DataVarIndex.POS_X, DataVarIndex.POS_Z), 
-    #                 DataVarIndex.POS_X, 
-    #                 DataVarIndex.POS_Z,
-    #                 DataVarIndex.ROLL,
-    #                 DataVarIndex.PITCH,
-    #                 DataVarIndex.VEL_X,
-    #                 DataVarIndex.VEL_Z,
-    #                 DataVarIndex.CMD_THRUST]
+    status = None #status = Status.TRACK_TRAJ
 
     # Specify the data by setting either the run_name or the file_name
-    run_name = 'balmy-microwave-194' # run_name = 'flowing-spaceship-73'
+    run_name = 'honest-sun-217' # run_name = 'flowing-spaceship-73'
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
-    use_latest = True # use_latest has the higher periority than setting the run_name
+    use_latest = False # use_latest has the higher periority than setting the run_name
     smoothed = False
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.POS_X] # Must be give in form of ndarray
@@ -249,49 +238,35 @@ if __name__ == "__main__":
 
     plotter = Plotter(save_fig=False)
 
-    if plot_indices is None:
-        # dictionary that maps the trajectory plane to the corresponding indices
-        plane2indices_pos = {'x': DataVarIndex.POS_X, 'y': DataVarIndex.POS_Y, 'z': DataVarIndex.POS_Z}
-        plane2indices_vel = {'x': DataVarIndex.VEL_X, 'y': DataVarIndex.VEL_Y, 'z': DataVarIndex.VEL_Z}
-
-        '''
-        plot_indices = [(data_index_a, data_index_b), 
-                        data_index_a, 
-                        data_index_b,
-                        # DataVarIndex.ROLL,
-                        DataVarIndex.PITCH,
-                        data_index_a_vel,
-                        data_index_b_vel,
-                        DataVarIndex.CMD_THRUST, 
-                        DataVarIndex.TIME]
-        '''
+    # dictionary that maps the trajectory plane to the corresponding indices
+    plane2indices_pos = {'x': DataVarIndex.POS_X, 'y': DataVarIndex.POS_Y, 'z': DataVarIndex.POS_Z}
+    plane2indices_vel = {'x': DataVarIndex.VEL_X, 'y': DataVarIndex.VEL_Y, 'z': DataVarIndex.VEL_Z}
         
-        
-        # Select the indices based on the trajectory plane
-        data_index_a = plane2indices_pos[traj_plane[0]]
-        data_index_b = plane2indices_pos[traj_plane[1]]
-        data_index_c = plane2indices_pos[traj_plane[2]]
-        data_index_a_vel = plane2indices_vel[traj_plane[0]]
-        data_index_b_vel = plane2indices_vel[traj_plane[1]]
-        data_index_c_vel = plane2indices_vel[traj_plane[2]]
+    # Select the indices based on the trajectory plane
+    data_index_a = plane2indices_pos[traj_plane[0]]
+    data_index_b = plane2indices_pos[traj_plane[1]]
+    data_index_c = plane2indices_pos[traj_plane[2]]
+    data_index_a_vel = plane2indices_vel[traj_plane[0]]
+    data_index_b_vel = plane2indices_vel[traj_plane[1]]
+    data_index_c_vel = plane2indices_vel[traj_plane[2]]
 
-        plot_indices = [(data_index_a, data_index_b), 
-                        (data_index_b, data_index_c), 
-                        (data_index_a, data_index_c), 
-                        data_index_a, 
-                        data_index_b,
-                        data_index_c,
-                        data_index_a_vel,
-                        data_index_b_vel,
-                        data_index_c_vel,
-                        DataVarIndex.ROLL,
-                        DataVarIndex.PITCH,          
-                        DataVarIndex.YAW,          
-                        #DataVarIndex.CMD_THRUST,
-                        #DataVarIndex.ROLL_RATE,
-                        #DataVarIndex.YAW_RATE,
-                        #DataVarIndex.PITCH_RATE,
-                        ] 
+    plot_indices = [(data_index_a, data_index_b), 
+                    (data_index_b, data_index_c), 
+                    (data_index_a, data_index_c), 
+                    data_index_a, 
+                    data_index_b,
+                    data_index_c,
+                    data_index_a_vel,
+                    data_index_b_vel,
+                    data_index_c_vel,
+                    DataVarIndex.ROLL,
+                    DataVarIndex.PITCH,          
+                    DataVarIndex.YAW,          
+                    #DataVarIndex.CMD_THRUST,
+                    #DataVarIndex.ROLL_RATE,
+                    #DataVarIndex.YAW_RATE,
+                    #DataVarIndex.PITCH_RATE,
+                    ] 
         
     plotter = Plotter(save_fig=False)
     if plot_pred_state:

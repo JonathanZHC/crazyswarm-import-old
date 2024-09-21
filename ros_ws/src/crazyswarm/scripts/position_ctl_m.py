@@ -150,8 +150,6 @@ class MPCSolver:
         W = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_output + model_obj.dim_input))
         W[:model_obj.dim_output, :model_obj.dim_output] = np.eye(model_obj.dim_output) * Q
         W[model_obj.dim_output:, model_obj.dim_output:] = np.eye(model_obj.dim_input) * R
-        # 因为thrust比其他状态高太多数量级，防止模型为了采用更小的thrust而降低对其他状态的跟踪能力
-        #W[-1, -1] = 0 
 
         # Define weight matrix for stage and terminal cost
         ocp.cost.W = W # Stage cost 
@@ -227,10 +225,6 @@ class PositionController:
         self.MPC_dim_input = self.solver_obj.dim_input
         self.MPC_dim_output = self.solver_obj.dim_output
 
-        # Internal parameter for warm starting
-        #self.prev_solution_x = np.zeros((self.MPC_N, self.MPC_dim_state))
-        #self.prev_solution_u = np.zeros((self.MPC_N, self.MPC_dim_input))
-
         # Parameters for time recording
         self.counter = int(0)
         self.ave_cycle_time = float(0.0)
@@ -246,10 +240,6 @@ class PositionController:
         yref[:, :self.MPC_dim_output] = target_state_arr[:self.MPC_N, :]
         for i in range(self.MPC_N):
             self.solver_obj.solver.set(i, "yref", yref[i, :])
-
-            # Warm starting: initialize a policy for SQP
-            #self.solver_obj.solver.set(i, "u", self.prev_solution_u[i])
-            #self.solver_obj.solver.set(i, "x", self.prev_solution_x[i])
 
         # last yref has different shape (dim = 4), must be initialized individually
         self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, :]) 
@@ -274,11 +264,6 @@ class PositionController:
         #rospy.loginfo('Cumulative maximal cycle time for SQP solving: %f' %self.max_cycle_time)
         "----------for test----------"
         
-
-        # save for warm starting
-        #for i in range(self.MPC_N): 
-        #    self.prev_solution_u[i] = self.solver_obj.solver.get(i, "u")
-        #    self.prev_solution_x[i] = self.solver_obj.solver.get(i, "x")
 
 
         "----------for test----------"
