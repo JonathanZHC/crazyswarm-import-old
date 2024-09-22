@@ -46,7 +46,7 @@ if __name__ == "__main__":
     print("Data will be saved to: ", file_path)
     
     control_freq = 60.0
-    grad_start = True
+    grad_start = False # better not to use in hybrid-conrtoller, will introduce an extra jump in pitch
     sim = True
 
     quad_motion = QuadMotion(state_estimator, control_freq=control_freq,  grad_start = grad_start,
