@@ -169,6 +169,7 @@ class QuadMotion:
             self.track_traj_counter = 0 # set value = 0 to switch on
         else:
             self.track_traj_counter = 31 # set value >= 31 to switch off
+        
 
 
     def log_data_init(self):
@@ -665,8 +666,8 @@ if __name__ == "__main__":
     print("Data will be saved to: ", file_path)
     control_freq = 60.0
     grad_start = True
-    quad_motion = QuadMotion(state_estimator, control_freq=control_freq, vicon=vicon, 
-                             verbose=True, log_data=True, filename=file_path, grad_start=grad_start)
+    quad_motion = QuadMotion(state_estimator, vicon=vicon, control_freq=control_freq,  grad_start=grad_start, 
+                             verbose=True, log_data=True, filename=file_path)
 
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
