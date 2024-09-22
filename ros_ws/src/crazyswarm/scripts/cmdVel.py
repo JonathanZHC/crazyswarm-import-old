@@ -573,9 +573,10 @@ class QuadMotion:
         """
 
         # Use linear smoothing between the current velocity and the desired velocity at the beginning of the trajectory
-        target_pos, target_vel, target_yaw = traj.get_coordinates(0)
+        target_pos, target_vel, target_yaw_rad = traj.get_coordinates(0)
         interpolation_duration = 1.0
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw, status=Status.INTERPOLATE)
+        target_yaw_deg = rad2deg(target_yaw_rad)
+        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.INTERPOLATE)
 
         rpy = self.state_estimator.rpy
         pos = self.state_estimator.pos
@@ -626,7 +627,8 @@ class QuadMotion:
         # Use linear smoothing between the end of the trajectory and hovering
         target_vel = np.zeros(3,)
         interpolation_duration = 1.0
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw, status=Status.INTERPOLATE)
+        target_yaw_deg = 0.0
+        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.INTERPOLATE)
 
 
 if __name__ == "__main__":
