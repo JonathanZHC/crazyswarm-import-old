@@ -93,7 +93,7 @@ class StateEstimator:
 
 class QuadMotion:
 
-    def __init__(self, state_estimator=None, vicon=None, control_freq=30, verbose=False, log_data=False, filename=None, sim=False):
+    def __init__(self, state_estimator=None, vicon=None, control_freq=30, grad_start=True, verbose=False, log_data=False, filename=None, sim=False):
 
         self.control_freq = control_freq
         self.dt = 1.0 / control_freq
@@ -161,6 +161,13 @@ class QuadMotion:
         self.delta_t_sum_ave = 0
         self.delta_t_sum_var = 0
         "----------for test----------"
+
+        # Define counter parameter for gradually starting
+        self.grad_start = grad_start
+        if self.grad_start:
+            self.track_traj_counter = 0 # set value = 0 to switch on
+        else:
+            self.track_traj_counter = 31 # set value >= 31 to switch off
 
 
     def log_data_init(self):
@@ -612,15 +619,25 @@ class QuadMotion:
                 time_traj = self.timeHelper.time() - startTime
                 looping_condition = time_traj <= traj.traj_length
 
+            # Update counter for gradually starting
+            self.track_traj_counter += 1
+
             time_arr = np.arange(time_traj, time_traj + (self.MPC_N + 1) * self.dt, self.dt)
             target_pos_arr = np.zeros((self.MPC_N + 1, 3))
             target_vel_arr = np.zeros((self.MPC_N + 1, 3))
             target_yaw_arr = np.zeros((self.MPC_N + 1, 1))
+            
             for i in range(self.MPC_N + 1):
-                pos_ref, vel_ref, yaw_ref = traj.get_coordinates(time_arr[i])
-                target_pos_arr[i, :] = pos_ref.T
-                target_vel_arr[i, :] = vel_ref.T
-                target_yaw_arr[i, :] = yaw_ref
+                if i < self.track_traj_counter:
+                    pos_ref, vel_ref, yaw_ref = traj.get_coordinates(time_arr[i])
+                    target_pos_arr[i, :] = pos_ref.T
+                    target_vel_arr[i, :] = vel_ref.T
+                    target_yaw_arr[i, :] = yaw_ref
+                else: 
+                    # Use gradually starting at initial stage of track_traj
+                    target_pos_arr[i, :] = target_pos_arr[i-1, :]
+                    target_vel_arr[i, :] = target_vel_arr[i-1, :]
+                    target_yaw_arr[i, :] = target_yaw_arr[i-1, :]
             
             self.pos_control(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr, mode="MPC", status=Status.TRACK_TRAJ)
 
@@ -669,8 +686,9 @@ if __name__ == "__main__":
     file_path = os.path.join(data_dir, file_name)
     print("Data will be saved to: ", file_path)
     control_freq = 60.0
+    grad_start = True
     quad_motion = QuadMotion(state_estimator, control_freq=control_freq, vicon=vicon, 
-                             verbose=True, log_data=True, filename=file_path)
+                             verbose=True, log_data=True, filename=file_path, grad_start=grad_start)
 
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
