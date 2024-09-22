@@ -220,13 +220,14 @@ class Plotter:
 if __name__ == "__main__":
     wandb_project = "tac-cbf" # test
     # Plot the entire trajectory or just the tracking part
-    status = Status.INTERPOLATE #status = Status.TRACK_TRAJ
+    status = None #status = Status.TRACK_TRAJ
 
     # Specify the data by setting either the run_name or the file_name
     run_name = 'balmy-microwave-194' # run_name = 'flowing-spaceship-73'
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
+    
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.POS_X] # Must be give in form of ndarray
     
