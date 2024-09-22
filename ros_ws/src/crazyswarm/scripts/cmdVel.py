@@ -514,7 +514,7 @@ class QuadMotion:
 
 
 
-   '''higher level behavior'''
+    '''higher level behavior'''
 
 
     def static_observation(self, hover_duration=5.0):
