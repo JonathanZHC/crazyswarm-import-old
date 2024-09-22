@@ -192,6 +192,8 @@ class QuadMotion:
         dt = t - self.prev_t
         return dt
 
+    '''basic behavior'''
+
     def pos_control(self, pos, rpy, vel, target_pos, target_yaw, target_vel, status):
         """ Position control of the drone.
 
@@ -289,6 +291,9 @@ class QuadMotion:
             self.prev_t = t
         else:
             self.timeHelper.sleepForRate(self.control_freq)
+            
+
+    '''lower level behavior'''
 
     def vertical(self, velocity=0.3, height=0.5, target_yaw_deg=0.0, status=Status.VERTICAL):
         """ Move the drone vertically up or down.
@@ -386,6 +391,9 @@ class QuadMotion:
             vel = self.state_estimator.vel
             self.pos_control(pos, rpy, vel, init_pos, target_yaw, target_vel, status=status)
     
+    '''higher level behavior'''
+
+
     def static_observation(self, hover_duration=5.0):
         """ Keep static to let the variance of observations converge to some small value, especially important in KF
         
@@ -394,36 +402,9 @@ class QuadMotion:
             
         """
         self.idle()
+        self.hover(hover_duration, target_yaw_deg, status=Status.STATIC_OBSV)
 
-        rospy.loginfo("Static observation stage started.")
-
-        init_pos = np.zeros(3,)
-        target_vel = np.zeros(3,)
-        num_steps = int(hover_duration * self.control_freq)
-        target_yaw = np.zeros(1,)
-
-        for i in range(num_steps):
-            rpy = np.zeros(3,)
-            pos = np.zeros(3,)
-            vel = np.zeros(3,)
-            self.pos_control(pos, rpy, vel, init_pos, target_yaw, target_vel, status=Status.STATIC_OBSV)
-        
-        rospy.loginfo("Static observation stage ended.")
-
-    def land(self, velocity, height=0.03, target_yaw_deg=0.0, hover_duration=2.0):
-        """ Land the drone to a certain height.
-
-        Args:
-            duration (float): duration of the landing in seconds.
-            height (float): height to land to in meters.
-
-        """
-        self.horizontal(velocity, 0, 0, target_yaw_deg, status=Status.LAND)
-        self.hover(hover_duration, target_yaw_deg, status=Status.LAND)
-        self.vertical(velocity, height, target_yaw_deg, status=Status.LAND)
-        self.cf.cmdStop()
-
-    def take_off(self, velocity, height, target_yaw_deg=0.0, hover_duration=2.0):
+    def take_off(self, velocity, height, target_yaw_deg=0.0, interpolation_duration=1.0, hover_duration=2.0):
         """ Take off the drone to a certain height.
         
         Args: 
@@ -432,8 +413,55 @@ class QuadMotion:
             target_yaw_deg (float): target yaw angle in degrees.
             
         """
+        # Take off
+        # Period 1: acceleration
+        target_vel = np.array([0.0, 0.0, velocity])
+        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.TAKEOFF)
+        # Period 2: uniform rectilinear motion
+        target_height = height - velocity * interpolation_duration / 2
         self.vertical(velocity, height, target_yaw_deg, status=Status.TAKEOFF)
+        # Period 3: deceleration
+        target_vel = np.zeros(3,)
+        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.TAKEOFF)
+
+        # Hover
         self.hover(hover_duration, target_yaw_deg, status=Status.TAKEOFF)
+
+    def land(self, velocity, height=0.03, target_yaw_deg=0.0, interpolation_duration=0.8, hover_duration=2.0):
+        """ Land the drone to a certain height.
+
+        Args:
+            duration (float): duration of the landing in seconds.
+            height (float): height to land to in meters.
+            target_yaw_deg (float): target yaw angle in degrees.
+
+        """
+        # Firstly go back to the origin in XOY
+        # Period 1: acceleration
+        pos = self.state_estimator.pos
+        vel_x = - velocity * pos[0] / np.linalg.norm([pos[0], pos[1]])
+        vel_y = - velocity * pos[1] / np.linalg.norm([pos[0], pos[1]])
+        target_vel = np.array([vel_x, vel_y, 0.0])
+        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND)
+        # Period 2: uniform rectilinear motion
+        target_x = - vel_x * interpolation_duration / 2
+        target_y = - vel_y * interpolation_duration / 2
+        self.horizontal(velocity, target_x, target_y, target_yaw_deg, status=Status.LAND)
+        # Period 3: deceleration
+        target_vel = np.zeros(3,)
+        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND)
+        
+        # Hover
+        self.hover(hover_duration, target_yaw_deg, status=Status.LAND)
+
+        # Then go back to the origin
+        # Period 1: acceleration
+        target_vel = np.array([0.0, 0.0, -velocity])
+        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND)
+        # Period 2: uniform rectilinear motion to the origin
+        self.vertical(velocity, height, target_yaw_deg, status=Status.LAND)
+
+        self.cf.cmdStop()
 
     def track_traj(self, traj: TrajectoryGenerator3DPeriodicMotion):
         """ Track the trajectory generated by the trajectory generator.
