@@ -550,7 +550,7 @@ class QuadMotion:
         # Hover
         self.hover(hover_duration, target_yaw_deg, status=Status.TAKEOFF)
 
-    def land(self, velocity, height=0.03, target_yaw_deg=0.0, interpolation_duration=0.8, hover_duration=2.0):
+    def land(self, velocity, height=0.03, target_yaw_deg=0.0, interpolation_duration=1.0, hover_duration=2.0):
         """ Land the drone to a certain height.
 
         Args:
@@ -561,15 +561,16 @@ class QuadMotion:
         """
         # Firstly go back to the origin in XOY
         # Period 1: acceleration
+        velocity_t = 0.1
         pos = self.state_estimator.pos
-        vel_x = - velocity * pos[0] / np.linalg.norm([pos[0], pos[1]])
-        vel_y = - velocity * pos[1] / np.linalg.norm([pos[0], pos[1]])
-        target_vel = np.array([vel_x, vel_y, 0.0])
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND)
+        vel_x = - velocity_t * pos[0] / np.linalg.norm([pos[0], pos[1]])
+        vel_y = - velocity_t * pos[1] / np.linalg.norm([pos[0], pos[1]])
+        #target_vel = np.array([vel_x, vel_y, 0.0])
+        #self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND) # no need because of too short time
         # Period 2: uniform rectilinear motion
         target_x = - vel_x * interpolation_duration / 2
         target_y = - vel_y * interpolation_duration / 2
-        self.horizontal(velocity, target_x, target_y, target_yaw_deg, status=Status.LAND)
+        self.horizontal(velocity_t, target_x, target_y, target_yaw_deg, status=Status.LAND)
         # Period 3: deceleration
         target_vel = np.zeros(3,)
         self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND)
