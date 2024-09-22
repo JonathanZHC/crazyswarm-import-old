@@ -209,7 +209,7 @@ class Simulator: # called by cf_sim.launch
         self.frame_id += 1
 
 
-def main(cf_id_dec, sim_frequency, model_file, x0, state):
+def main(cf_id_dec, sim_frequency, model_file, x0):
     # Initialize the ROS node
     rospy.init_node('simulator')
 
@@ -222,7 +222,7 @@ def main(cf_id_dec, sim_frequency, model_file, x0, state):
     # Create the simulator object
 
 
-    simulator = Simulator(cf_id_dec, sim_frequency, model_file, x0, state)
+    simulator = Simulator(cf_id_dec, sim_frequency, model_file, x0)
 
     while not rospy.is_shutdown():
         simulator.simulate()
