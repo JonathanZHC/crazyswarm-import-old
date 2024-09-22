@@ -220,7 +220,7 @@ class Plotter:
 if __name__ == "__main__":
     wandb_project = "tac-cbf" # test
     # Plot the entire trajectory or just the tracking part
-    status = None #status = Status.TRACK_TRAJ
+    status = Status.LAND #status = Status.TRACK_TRAJ
 
     # Specify the data by setting either the run_name or the file_name
     run_name = 'balmy-microwave-194' # run_name = 'flowing-spaceship-73'

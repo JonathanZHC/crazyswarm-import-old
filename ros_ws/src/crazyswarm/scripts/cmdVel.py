@@ -584,7 +584,7 @@ class QuadMotion:
         """
         # Firstly go back to the origin in XOY
         # Period 1: acceleration
-        velocity_t = 0.1
+        velocity_t = 0.3
         pos = self.state_estimator.pos
         vel_x = - velocity_t * pos[0] / np.linalg.norm([pos[0], pos[1]])
         vel_y = - velocity_t * pos[1] / np.linalg.norm([pos[0], pos[1]])
