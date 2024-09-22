@@ -557,7 +557,7 @@ class QuadMotion:
         self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.TAKEOFF)
         # Period 2: uniform rectilinear motion
         target_height = height - velocity * interpolation_duration / 2
-        self.vertical(velocity, height, target_yaw_deg, status=Status.TAKEOFF)
+        self.vertical(velocity, target_height, target_yaw_deg, status=Status.TAKEOFF)
         # Period 3: deceleration
         target_vel = np.zeros(3,)
         self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.TAKEOFF)
