@@ -165,9 +165,19 @@ class QuadMotion:
         # Define counter parameter for gradually starting
         self.grad_start = grad_start
         if self.grad_start:
-            self.track_traj_counter = 0 # set value = 0 to switch on
+            # set value = 0 to switch on
+            self.track_traj_counter = 0 
         else:
-            self.track_traj_counter = 31 # set value >= 31 to switch off
+            # # set value >= 31 to switch off
+            self.track_traj_counter = 31 # Hyperparameter for gradually starting
+        
+        # Define parameters to do input command interpolation
+        self.save = True
+        self.status_last = None
+        self.counter_interpolate_cmd = 0
+        self.ub_interpolate_cmd = 30 # Hyperparameter for input command interpolation
+        self.pwm_last = 0
+        self.euler_last = np.array([0.0, 0.0, 0.0])
 
 
     def log_data_init(self):
@@ -271,13 +281,35 @@ class QuadMotion:
         elif mode == "MPC":
             pwm, euler, state_predicted = self.posCtrl_MPC.compute_action(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr)
         
-        # for static observation stage
+
+        # Input correction for static observation stage
         if status == Status.STATIC_OBSV:
             euler = np.zeros(3)
             euler[0] = 0
             euler[1] = 0
             euler[2] = 0
             pwm = 0
+
+        # Input correction for input command interpolation
+        elif self.status_last == Status.INTERPOLATE and status == Status.TRACK_TRAJ or self.status_last == Status.TRACK_TRAJ and status == Status.INTERPOLATE:
+            self.save = False
+            if self.counter_interpolate_cmd <= self.ub_interpolate_cmd:
+                self.counter_interpolate_cmd += 1
+                alpha = self.counter_interpolate_cmd / self.ub_interpolate_cmd
+                pwm = alpha * pwm + (1 - alpha) * self.pwm_last
+                euler = alpha * euler + (1 - alpha) * self.euler_last
+
+            else:
+                # reset counter and flag bit for save_last_input
+                self.counter_interpolate_cmd = 0
+                self.save = True
+
+        # Record last value in interpolation_vel stage to interpolate input command
+        if status in [Status.INTERPOLATE, Status.TRACK_TRAJ] and self.save:
+            self.status_last = status
+            self.pwm_last = pwm
+            self.euler_last = euler
+
 
         t = time.time() 
         # Update the command data to be published
@@ -512,6 +544,7 @@ class QuadMotion:
             #pos_i_arr = np.tile(pos_i, (self.MPC_N + 1, 1))
 
             self.pos_control(pos, rpy, vel, pos_i, vel_i, yaw_i, mode="PID", status=status)
+        
 
     def hover(self, duration=2.0, target_yaw_deg=0.0, status=Status.HOVER):
         """ Hover the drone at the current position.
