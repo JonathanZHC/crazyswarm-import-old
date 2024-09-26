@@ -148,8 +148,6 @@ class Plotter:
 
 if __name__ == "__main__":
     wandb_project = "test" # tac-cbf
-    # Plot the entire trajectory or just the tracking part
-    status = None #status = Status.TRACK_TRAJ
     # Specify the indices to be plotted
     plot_indices = None
     # Specify the data by setting either the run_name or the file_name
@@ -157,6 +155,7 @@ if __name__ == "__main__":
     file_name = None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
+    status = None #status = Status.TRACK_TRAJ
     
     file_path, traj_plane = get_file_path_from_run(wandb_project, run_name, file_name, use_latest, smoothed)
 
