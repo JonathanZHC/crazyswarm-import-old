@@ -165,6 +165,37 @@ class Plotter:
 
         plt.show()
 
+    def report_RMSE(self, file_path, status):
+        # Read the data from the csv file
+        data = load_data(file_path)
+        
+        # Only use the data that matches the status
+        if status is not None:
+            data = data[data[:, DataVarIndex.STATUS] == status.value]
+
+        # Subtract the start time from the time values
+        start_time = data[0, DataVarIndex.TIME]
+        data[:, DataVarIndex.TIME] -= start_time
+
+        # Define RMSE array and indices for x / y / z
+        RMSE = np.zeros(4)
+        RMSE_indices = [DataVarIndex.POS_X,
+                        DataVarIndex.POS_Y,
+                        DataVarIndex.POS_Z,
+                        ] 
+
+        # Calculate RMSE error along each single axis
+        for i, index in enumerate(RMSE_indices):
+            error_index = data[:, index] - data[:, self.match_desired[index]]
+            RMSE[i] = np.sqrt(np.mean(error_index**2))  # RMSE error along each single axis
+
+        # Calculate RMSE error in 3D position
+        error_3d = np.linalg.norm(data[:, RMSE_indices] - data[:, [self.match_desired[idx] for idx in RMSE_indices]], axis=1)
+        RMSE[3] = np.sqrt(np.mean(error_3d**2))  # RMSE error in 3D position
+
+        return RMSE
+        
+
 if __name__ == "__main__":
     wandb_project = "test" # tac-cbf
     # Specify the data by setting either the run_name or the file_name
@@ -221,3 +252,10 @@ if __name__ == "__main__":
         plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices)
     else:
         plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
+
+    RMSE = plotter.report_RMSE(file_path, status=status) 
+    # Print RMSE values for each axis and 3D position
+    print(f"RMSE (X): {RMSE[0]:.4f}")
+    print(f"RMSE (Y): {RMSE[1]:.4f}")
+    print(f"RMSE (Z): {RMSE[2]:.4f}")
+    print(f"RMSE (3D): {RMSE[3]:.4f}")
