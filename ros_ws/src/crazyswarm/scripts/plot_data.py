@@ -165,6 +165,45 @@ class Plotter:
 
         plt.show()
 
+    def report_velocity(self, file_path, status):
+        # Read the data from the csv file
+        data = load_data(file_path)
+        
+        # Only use the data that matches the status
+        if status is not None:
+            data = data[data[:, DataVarIndex.STATUS] == status.value]
+
+        # Subtract the start time from the time values
+        start_time = data[0, DataVarIndex.TIME]
+        data[:, DataVarIndex.TIME] -= start_time
+
+        # Define velocity array and indices for x / y / z / 3D
+        max_velocity_real = np.zeros(4)
+        ave_velocity_real = np.zeros(4)
+        max_velocity_des = np.zeros(4)
+        ave_velocity_des = np.zeros(4)
+        velocity_indices = [DataVarIndex.VEL_X,
+                            DataVarIndex.VEL_Y,
+                            DataVarIndex.VEL_Z,
+                            ] 
+        for i, index in enumerate(velocity_indices):
+            max_velocity_real[i] = np.max(data[:, velocity_indices[i]])
+        max_velocity_real[3] = np.max(np.linalg.norm(data[:, velocity_indices], axis=1))
+        
+        for i, index in enumerate(velocity_indices):
+            ave_velocity_real[i] = np.mean(np.abs(data[:, velocity_indices[i]]))
+        ave_velocity_real[3] = np.mean(np.abs(np.linalg.norm(data[:, velocity_indices], axis=1)))
+        
+        for i, index in enumerate(velocity_indices):
+            max_velocity_des[i] = np.max(data[:, self.match_desired[velocity_indices[i]]])
+        max_velocity_des[3] = np.max(np.linalg.norm(data[:, [self.match_desired[idx] for idx in velocity_indices]], axis=1))
+        
+        for i, index in enumerate(velocity_indices):
+            ave_velocity_des[i] = np.mean(np.abs(data[:, self.match_desired[velocity_indices[i]]]))
+        ave_velocity_des[3] = np.mean(np.abs(np.linalg.norm(data[:, [self.match_desired[idx] for idx in velocity_indices]], axis=1)))
+
+        return max_velocity_real, ave_velocity_real, max_velocity_des, ave_velocity_des
+
     def report_RMSE(self, file_path, status):
         # Read the data from the csv file
         data = load_data(file_path)
@@ -255,6 +294,13 @@ if __name__ == "__main__":
         plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices) 
     else:
         plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
+
+    max_velocity_real, ave_velocity_real, max_velocity_des, ave_velocity_des = plotter.report_velocity(file_path, status=status) 
+    # Print maximal 3D velocity 
+    print(f"Maximal Velocity (real): {max_velocity_real[0]:.4f}m/s in x, {max_velocity_real[1]:.4f}m/s in y, {max_velocity_real[2]:.4f}m/s in z, {max_velocity_real[3]:.4f}m/s in 3d")
+    print(f"Average Velocity (real): {ave_velocity_real[0]:.4f}m/s in x, {ave_velocity_real[1]:.4f}m/s in y, {ave_velocity_real[2]:.4f}m/s in z, {ave_velocity_real[3]:.4f}m/s in 3d")
+    print(f"Maximal Velocity (design): {max_velocity_des[0]:.4f}m/s in x, {max_velocity_des[1]:.4f}m/s in y, {max_velocity_des[2]:.4f}m/s in z, {max_velocity_des[3]:.4f}m/s in 3d")
+    print(f"Average Velocity (design): {ave_velocity_des[0]:.4f}m/s in x, {ave_velocity_des[1]:.4f}m/s in y, {ave_velocity_des[2]:.4f}m/s in z, {ave_velocity_des[3]:.4f}m/s in 3d")
 
     RMSE = plotter.report_RMSE(file_path, status=status) 
     # Print RMSE values for each axis and 3D position
