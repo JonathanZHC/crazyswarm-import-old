@@ -176,6 +176,7 @@ if __name__ == "__main__":
     smoothed = False
     status = None # Status.TRACK_TRAJ
 
+    # Plot setting about intermediate predicted state
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.POS_X] # Must be give in form of ndarray
     
@@ -200,18 +201,18 @@ if __name__ == "__main__":
         data_index_b_vel = plane2indices_vel[traj_plane[1]]
         data_index_c_vel = plane2indices_vel[traj_plane[2]]
 
-        plot_indices = [#(data_index_a, data_index_b), 
-                        #(data_index_b, data_index_c), 
-                        #(data_index_a, data_index_c), 
-                        #data_index_a, 
-                        #data_index_b,
-                        #data_index_c,
+        plot_indices = [(data_index_a, data_index_b), 
+                        (data_index_b, data_index_c), 
+                        (data_index_a, data_index_c), 
+                        data_index_a, 
+                        data_index_b,
+                        data_index_c,
                         data_index_a_vel,
                         data_index_b_vel,
                         data_index_c_vel,
                         DataVarIndex.ROLL,
                         DataVarIndex.PITCH,          
-                        DataVarIndex.YAW,          
+                        #DataVarIndex.YAW,          
                         DataVarIndex.CMD_THRUST,
                         #DataVarIndex.ROLL_RATE,
                         #DataVarIndex.YAW_RATE,
