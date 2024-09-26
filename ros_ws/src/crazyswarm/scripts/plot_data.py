@@ -165,69 +165,16 @@ class Plotter:
 
         plt.show()
 
-    def plot_frequency_spectrum(self, data, index, plot_indices, threshold_freq=80):
-        # Extract the signal of interest
-        signal = data[:, index]
-
-        n = 10 * len(signal)
-        dt = (data[1, DataVarIndex.TIME] - data[0, DataVarIndex.TIME]) / 1
-
-        # Perform Fourier transform
-        yf = np.fft.fft(signal, n)
-        xf = np.fft.fftfreq(n, dt)
-
-        # Only consider positive frequencies
-        positive_freq_indices = np.where(xf >= 0)
-        xf = xf[positive_freq_indices]
-        yf = yf[positive_freq_indices]
-
-        # Plot the frequency spectrum
-        plt.figure(figsize=(12, 6))
-        plt.plot(xf, np.abs(yf))
-        plt.title(f'Frequency Spectrum for {index.name}')
-        plt.xlim(0, 10)
-        plt.xlabel('Frequency')
-        #plt.ylim(0, 5)
-        plt.ylabel('Amplitude')
-        plt.show()
-
-        # Calculate high frequency energy
-        high_freq_indices = np.where(xf > threshold_freq)
-        high_freq_energy = np.sum(np.abs(yf[high_freq_indices])**2)
-
-        total_freq_energy = np.sum(np.abs(yf)**2)
-
-        print(f"High frequency energy for {index.name}: {100 * high_freq_energy / total_freq_energy}%")
-
-        # Calculate main frequency
-        highest_freq_indices = np.where(yf == max(yf))
-        x_highest = xf[highest_freq_indices]
-
-        print(f"Main frequency for {index.name}: {x_highest}")
-
-    def plot_all_frequency_spectrums(self, file_path, plot_indices=None, status=None, threshold_freq=80):
-        # Read the data from the csv file
-        data = load_data(file_path)
-
-        if status is not None:
-            # Only plot the data that matches the status
-            data = data[data[:, DataVarIndex.STATUS] == status.value]
-
-        for index in plot_indices:
-            self.plot_frequency_spectrum(data, index, plot_indices, threshold_freq)
-
-
 if __name__ == "__main__":
-    wandb_project = "tac-cbf" # test
-    # Plot the entire trajectory or just the tracking part
-    status = Status.LAND #status = Status.TRACK_TRAJ
-
+    wandb_project = "test" # tac-cbf
     # Specify the data by setting either the run_name or the file_name
     run_name = 'balmy-microwave-194' # run_name = 'flowing-spaceship-73'
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
-    
+    status = None # Status.TRACK_TRAJ
+
+    # Plot setting about intermediate predicted state
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.POS_X] # Must be give in form of ndarray
     
@@ -262,8 +209,8 @@ if __name__ == "__main__":
                     data_index_c_vel,
                     DataVarIndex.ROLL,
                     DataVarIndex.PITCH,          
-                    DataVarIndex.YAW,          
-                    #DataVarIndex.CMD_THRUST,
+                    #DataVarIndex.YAW,          
+                    DataVarIndex.CMD_THRUST,
                     #DataVarIndex.ROLL_RATE,
                     #DataVarIndex.YAW_RATE,
                     #DataVarIndex.PITCH_RATE,
@@ -274,4 +221,3 @@ if __name__ == "__main__":
         plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices)
     else:
         plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
-    #plotter.plot_all_frequency_spectrums(file_path, plot_indices=plot_indices, status=status, threshold_freq=3)
