@@ -165,80 +165,18 @@ class Plotter:
 
         plt.show()
 
-    def plot_frequency_spectrum(self, data, index, plot_indices, threshold_freq=80):
-        # Extract the signal of interest
-        signal = data[:, index]
-
-        n = 10 * len(signal)
-        dt = (data[1, DataVarIndex.TIME] - data[0, DataVarIndex.TIME]) / 1
-
-        # Perform Fourier transform
-        yf = np.fft.fft(signal, n)
-        xf = np.fft.fftfreq(n, dt)
-
-        # Only consider positive frequencies
-        positive_freq_indices = np.where(xf >= 0)
-        xf = xf[positive_freq_indices]
-        yf = yf[positive_freq_indices]
-
-        # Plot the frequency spectrum
-        plt.figure(figsize=(12, 6))
-        plt.plot(xf, np.abs(yf))
-        plt.title(f'Frequency Spectrum for {index.name}')
-        plt.xlim(0, 10)
-        plt.xlabel('Frequency')
-        #plt.ylim(0, 5)
-        plt.ylabel('Amplitude')
-        plt.show()
-
-        # Calculate high frequency energy
-        high_freq_indices = np.where(xf > threshold_freq)
-        high_freq_energy = np.sum(np.abs(yf[high_freq_indices])**2)
-
-        total_freq_energy = np.sum(np.abs(yf)**2)
-
-        print(f"High frequency energy for {index.name}: {100 * high_freq_energy / total_freq_energy}%")
-
-        # Calculate main frequency
-        highest_freq_indices = np.where(yf == max(yf))
-        x_highest = xf[highest_freq_indices]
-
-        print(f"Main frequency for {index.name}: {x_highest}")
-
-    def plot_all_frequency_spectrums(self, file_path, plot_indices=None, status=None, threshold_freq=80):
-        # Read the data from the csv file
-        data = load_data(file_path)
-
-        if status is not None:
-            # Only plot the data that matches the status
-            data = data[data[:, DataVarIndex.STATUS] == status.value]
-
-        for index in plot_indices:
-            self.plot_frequency_spectrum(data, index, plot_indices, threshold_freq)
-
-
 if __name__ == "__main__":
-    wandb_project = "tac-cbf"
-    # Plot the entire trajectory or just the tracking part
-    status = Status.TRACK_TRAJ #status = Status.TRACK_TRAJ
-
+    wandb_project = "test" # tac-cbf
     # Specify the indices to be plotted
     plot_indices = None
-    # plot_indices = [(DataVarIndex.POS_X, DataVarIndex.POS_Z), 
-    #                 DataVarIndex.POS_X, 
-    #                 DataVarIndex.POS_Z,
-    #                 DataVarIndex.ROLL,
-    #                 DataVarIndex.PITCH,
-    #                 DataVarIndex.VEL_X,
-    #                 DataVarIndex.VEL_Z,
-    #                 DataVarIndex.CMD_THRUST]
-
     # Specify the data by setting either the run_name or the file_name
     run_name = 'balmy-microwave-194' # run_name = 'flowing-spaceship-73'
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
     status = None  # Status.TRACK_TRAJ
+
+    # Plot setting about intermediate predicted state
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
     special_indices = [DataVarIndex.POS_X] # Must be give in form of ndarray
     
@@ -254,20 +192,7 @@ if __name__ == "__main__":
         # dictionary that maps the trajectory plane to the corresponding indices
         plane2indices_pos = {'x': DataVarIndex.POS_X, 'y': DataVarIndex.POS_Y, 'z': DataVarIndex.POS_Z}
         plane2indices_vel = {'x': DataVarIndex.VEL_X, 'y': DataVarIndex.VEL_Y, 'z': DataVarIndex.VEL_Z}
-
-        '''
-        plot_indices = [(data_index_a, data_index_b), 
-                        data_index_a, 
-                        data_index_b,
-                        # DataVarIndex.ROLL,
-                        DataVarIndex.PITCH,
-                        data_index_a_vel,
-                        data_index_b_vel,
-                        DataVarIndex.CMD_THRUST, 
-                        DataVarIndex.TIME]
-        '''
-        
-        
+  
         # Select the indices based on the trajectory plane
         data_index_a = plane2indices_pos[traj_plane[0]]
         data_index_b = plane2indices_pos[traj_plane[1]]
@@ -276,18 +201,18 @@ if __name__ == "__main__":
         data_index_b_vel = plane2indices_vel[traj_plane[1]]
         data_index_c_vel = plane2indices_vel[traj_plane[2]]
 
-        plot_indices = [#(data_index_a, data_index_b), 
-                        #(data_index_b, data_index_c), 
-                        #(data_index_a, data_index_c), 
-                        #data_index_a, 
-                        #data_index_b,
-                        #data_index_c,
+        plot_indices = [(data_index_a, data_index_b), 
+                        (data_index_b, data_index_c), 
+                        (data_index_a, data_index_c), 
+                        data_index_a, 
+                        data_index_b,
+                        data_index_c,
                         data_index_a_vel,
                         data_index_b_vel,
                         data_index_c_vel,
                         DataVarIndex.ROLL,
                         DataVarIndex.PITCH,          
-                        DataVarIndex.YAW,          
+                        #DataVarIndex.YAW,          
                         DataVarIndex.CMD_THRUST,
                         #DataVarIndex.ROLL_RATE,
                         #DataVarIndex.YAW_RATE,
@@ -299,5 +224,3 @@ if __name__ == "__main__":
         plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices) 
     else:
         plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
-
-    #plotter.plot_all_frequency_spectrums(file_path, plot_indices=plot_indices, status=status, threshold_freq=3)
