@@ -165,7 +165,7 @@ class Plotter:
 
         plt.show()
 
-    def report_max_velocity(self, file_path, status):
+    def report_velocity(self, file_path, status):
         # Read the data from the csv file
         data = load_data(file_path)
         
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     else:
         plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
 
-    max_velocity_real, ave_velocity_real, max_velocity_des, ave_velocity_des = plotter.report_max_velocity(file_path, status=status) 
+    max_velocity_real, ave_velocity_real, max_velocity_des, ave_velocity_des = plotter.report_velocity(file_path, status=status) 
     # Print maximal 3D velocity 
     print(f"Maximal Velocity (real): {max_velocity_real[0]:.4f}m/s in x, {max_velocity_real[1]:.4f}m/s in y, {max_velocity_real[2]:.4f}m/s in z, {max_velocity_real[3]:.4f}m/s in 3d")
     print(f"Average Velocity (real): {ave_velocity_real[0]:.4f}m/s in x, {ave_velocity_real[1]:.4f}m/s in y, {ave_velocity_real[2]:.4f}m/s in z, {ave_velocity_real[3]:.4f}m/s in 3d")
