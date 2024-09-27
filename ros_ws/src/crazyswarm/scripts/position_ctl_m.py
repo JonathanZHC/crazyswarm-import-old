@@ -144,14 +144,12 @@ class MPCSolver:
         # Define weight matrix in cost function
         # Initialize weight matrix for stage cost
         W = np.zeros((model_obj.dim_output + model_obj.dim_input, model_obj.dim_output + model_obj.dim_input))
-        W[:model_obj.dim_output, :model_obj.dim_output] = np.eye(model_obj.dim_output) * Q
-        W[model_obj.dim_output:, model_obj.dim_output:] = np.eye(model_obj.dim_input) * R
-        # 因为thrust比其他状态高太多数量级，防止模型为了采用更小的thrust而降低对其他状态的跟踪能力
-        #W[-1, -1] = 0 
+        W[:model_obj.dim_output, :model_obj.dim_output] = np.diag(np.array(Q))
+        W[model_obj.dim_output:, model_obj.dim_output:] = np.diag(np.array(R))
 
         # Define weight matrix for stage and terminal cost
         ocp.cost.W = W # Stage cost 
-        ocp.cost.W_e = np.eye(model_obj.dim_output) * Q  # Terminal cost 
+        ocp.cost.W_e = np.diag(np.array(Q))  # Terminal cost 
 
         '''Transform variables from OCP to QP form'''
         # Initialize output function for stage cost
