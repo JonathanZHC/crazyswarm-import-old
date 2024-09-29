@@ -64,17 +64,6 @@ class MPCModel:
         inputs = vertcat(f_collective, r_cmd, p_cmd, y_cmd)
 
         # Define nonlinear system dynamics
-        '''
-        f = vertcat(vx, 
-                    vy, 
-                    vz, 
-                    (params_acc[0] * f_collective + params_acc[1]) * sin(p),
-                    -(params_acc[0] * f_collective + params_acc[1]) * sin(r) * cos(p),
-                    (params_acc[0] * f_collective + params_acc[1]) * cos(r) * cos(p) - GRAVITY,
-                    params_roll_rate[0] * r + params_roll_rate[1] * r_cmd,
-                    params_pitch_rate[0] * p + params_pitch_rate[1] * p_cmd,
-                    params_yaw_rate[0] * y + params_yaw_rate[1] * y_cmd)
-        '''
         f = vertcat(vx, 
                     vy, 
                     vz, 

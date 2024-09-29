@@ -238,11 +238,11 @@ class Plotter:
 if __name__ == "__main__":
     wandb_project = "test" # tac-cbf
     # Specify the data by setting either the run_name or the file_name
-    run_name = 'honest-sun-217' # run_name = 'flowing-spaceship-73'
+    run_name = 'balmy-microwave-194' # run_name = 'flowing-spaceship-73'
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
-    status = Status.TRACK_TRAJ # Status.TRACK_TRAJ
+    status = None # Status.TRACK_TRAJ
 
     # Plot setting about intermediate predicted state
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
@@ -259,7 +259,7 @@ if __name__ == "__main__":
     # dictionary that maps the trajectory plane to the corresponding indices
     plane2indices_pos = {'x': DataVarIndex.POS_X, 'y': DataVarIndex.POS_Y, 'z': DataVarIndex.POS_Z}
     plane2indices_vel = {'x': DataVarIndex.VEL_X, 'y': DataVarIndex.VEL_Y, 'z': DataVarIndex.VEL_Z}
-        
+ 
     # Select the indices based on the trajectory plane
     data_index_a = plane2indices_pos[traj_plane[0]]
     data_index_b = plane2indices_pos[traj_plane[1]]
@@ -288,11 +288,10 @@ if __name__ == "__main__":
         
     plotter = Plotter(save_fig=False)
     if plot_pred_state:
-        plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices) 
+        plotter.plot_data(file_path, plot_indices=special_indices, status=status, special_indices=special_indices)
     else:
         plotter.plot_data(file_path, plot_indices=plot_indices, status=status) 
 
-    
     max_velocity_real, ave_velocity_real, max_velocity_des, ave_velocity_des = plotter.report_velocity(file_path, status=status) 
     # Print maximal 3D velocity 
     print(f"Maximal Velocity (real): {max_velocity_real[0]:.4f}m/s in x, {max_velocity_real[1]:.4f}m/s in y, {max_velocity_real[2]:.4f}m/s in z, {max_velocity_real[3]:.4f}m/s in 3d")
