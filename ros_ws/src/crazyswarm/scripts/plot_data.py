@@ -242,7 +242,7 @@ if __name__ == "__main__":
     file_name =  None # file_name = 'data_20240604_150836_estimated_data_from_observer.csv'
     use_latest = True # use_latest has the higher periority than setting the run_name
     smoothed = False
-    status = None # Status.TRACK_TRAJ
+    status = Status.TRACK_TRAJ # Status.TRACK_TRAJ
 
     # Plot setting about intermediate predicted state
     plot_pred_state = False # True: plot only target state with prediction; False: plot all selected states without prediction
