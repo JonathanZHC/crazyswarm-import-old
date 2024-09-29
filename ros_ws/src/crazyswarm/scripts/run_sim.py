@@ -2,7 +2,7 @@ import os
 import time
 
 from cmdVel import QuadMotion, StateEstimator
-from trajectory_generator import TrajectoryGenerator2DPeriodicMotion, TrajectoryGenerator3DPeriodicMotion
+from trajectory_generator import TrajectoryGenerator3DPeriodicMotion
 from plot_data import Plotter
 from utils import DataVarIndex, Status
 
@@ -91,8 +91,8 @@ if __name__ == "__main__":
                     data_index_c_vel,
                     DataVarIndex.ROLL,
                     DataVarIndex.PITCH, 
-                    DataVarIndex.YAW,                   
-                    #DataVarIndex.CMD_THRUST,
+                    #DataVarIndex.YAW,                   
+                    DataVarIndex.CMD_THRUST,
                     #DataVarIndex.ROLL_RATE,
                     #DataVarIndex.YAW_RATE,
                     #DataVarIndex.PITCH_RATE,
@@ -124,9 +124,8 @@ if __name__ == "__main__":
     # Take off
     velocity = 0.3
     height = 0.7
-    target_yaw_deg = 0.0
     print("Taking off...")
-    quad_motion.take_off(velocity, height, target_yaw_deg)
+    quad_motion.take_off(velocity, height)
 
     # Track trajectory
     print("Tracking trajectory...")
