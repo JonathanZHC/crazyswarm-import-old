@@ -204,11 +204,8 @@ class TrajectoryGenerator3DPeriodicMotion():
 
         # Calculate pose of trajectory (unit: rad)
         # Assumption: yaw == 0
-        # roll = np.arctan2(coords_c_dot_dot + self.GRAVITY, - coords_b_dot_dot)
-        # pitch = np.arctan2(coords_c_dot_dot + self.GRAVITY, coords_a_dot_dot)
-        # the setting above will lead to unstabe tracking, better to let the controler itself decide the roll and pitch angle
-        roll = 0
-        pitch = 0
+        roll = np.arcsin(- coords_b_dot_dot / np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]))
+        pitch = np.arcsin(coords_a_dot_dot / (np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]) * np.cos(roll)))
         yaw = 0
         
         # Calculate command of thrust (unit: N)
