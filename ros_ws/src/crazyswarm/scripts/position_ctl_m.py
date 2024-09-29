@@ -229,19 +229,19 @@ class PositionController:
         self.ave_cycle_time = float(0.0)
         self.max_cycle_time = float(0.0)
 
-    def mpc_controller(self, current_state, target_state_arr):
+    def mpc_controller(self, current_state, target_state_arr, target_input_arr):
         # Set initial state
         self.solver_obj.solver.set(0, "lbx", current_state)
         self.solver_obj.solver.set(0, "ubx", current_state)
     
         # Set tracking reference
         yref = np.zeros((self.MPC_N, self.MPC_dim_output + self.MPC_dim_input))
-        yref[:, :self.MPC_dim_output] = target_state_arr[:self.MPC_N, :]
+        yref[:, :self.MPC_dim_output] = target_state_arr[:self.MPC_N, [0, 1, 2, -1]] # Select x, y, z and yaw
+        yref[:self.MPC_N, -self.MPC_dim_input:] = target_input_arr[self.MPC_N, :]
         for i in range(self.MPC_N):
             self.solver_obj.solver.set(i, "yref", yref[i, :])
         # last yref has different shape (dim = 4), must be initialized individually
-        self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, :]) 
-        # OR self.solver_obj.solver.set("yref_e", target_state_arr[-1, :]) 
+        self.solver_obj.solver.set(self.MPC_N, "yref", target_state_arr[-1, [0, 1, 2, -1]]) # Select x, y, z and yaw
 
         # Solve MPC problem
         start = timeit.default_timer() # To record cycle time for each iteration
@@ -292,7 +292,7 @@ class PositionController:
 
         return u_opt, state_predicted
 
-    def compute_action(self, measured_pos, measured_vel, measured_rpy, measured_rpy_rate, desired_pos_arr, desired_vel_arr, desired_yaw_arr):
+    def compute_action(self, measured_pos, measured_vel, measured_rpy, measured_rpy_rate, desired_pos_arr, desired_vel_arr, desired_rpy_arr, desired_thrust_arr):
         """Compute the thrust and euler angles for the drone to reach the desired position.
         
         Args:
@@ -308,12 +308,11 @@ class PositionController:
         """
 
         current_state = np.hstack((measured_pos, measured_vel, measured_rpy, measured_rpy_rate))
-        target_output_arr = np.hstack((desired_pos_arr, desired_yaw_arr))
+        target_output_arr = np.hstack((desired_pos_arr, desired_vel_arr, desired_rpy_arr))
+        target_input_arr = np.hstack((desired_thrust_arr, desired_rpy_arr))
 
         # Call API function for Acados to solve MPC problem on current time step
-        input_desired, yaw_predicted = self.mpc_controller(current_state, target_output_arr)
-
-        print("input: ", input_desired)
+        input_desired, yaw_predicted = self.mpc_controller(current_state, target_output_arr, target_input_arr)
 
         current_thrust = input_desired[0]
         euler_desired = input_desired[1:]

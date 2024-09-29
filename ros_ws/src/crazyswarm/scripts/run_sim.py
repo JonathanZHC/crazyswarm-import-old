@@ -80,18 +80,18 @@ if __name__ == "__main__":
     data_index_b_acc = plane2indices_acc[traj_plane[1]]
     data_index_c_acc = plane2indices_acc[traj_plane[2]]
 
-    plot_indices = [#(data_index_a, data_index_b), 
-                    #(data_index_b, data_index_c), 
-                    #(data_index_a, data_index_c), 
-                    #data_index_a, 
-                    #data_index_b,
-                    #data_index_c,
-                    #data_index_a_vel,
-                    #data_index_b_vel,
-                    #data_index_c_vel,
+    plot_indices = [(data_index_a, data_index_b), 
+                    (data_index_b, data_index_c), 
+                    (data_index_a, data_index_c), 
+                    data_index_a, 
+                    data_index_b,
+                    data_index_c,
+                    data_index_a_vel,
+                    data_index_b_vel,
+                    data_index_c_vel,
                     DataVarIndex.ROLL,
                     DataVarIndex.PITCH, 
-                    DataVarIndex.YAW,                   
+                    #DataVarIndex.YAW,                   
                     DataVarIndex.CMD_THRUST,
                     #DataVarIndex.ROLL_RATE,
                     #DataVarIndex.YAW_RATE,
@@ -124,9 +124,8 @@ if __name__ == "__main__":
     # Take off
     velocity = 0.3
     height = 0.7
-    target_yaw_deg = 0.0
     print("Taking off...")
-    quad_motion.take_off(velocity, height, target_yaw_deg)
+    quad_motion.take_off(velocity, height)
 
     # Track trajectory
     print("Tracking trajectory...")

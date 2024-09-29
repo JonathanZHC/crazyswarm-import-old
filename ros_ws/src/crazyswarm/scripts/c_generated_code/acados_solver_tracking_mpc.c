@@ -412,10 +412,10 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     W_0[1+(NY0) * 1] = 1;
     W_0[2+(NY0) * 2] = 1;
     W_0[3+(NY0) * 3] = 1;
-    W_0[4+(NY0) * 4] = 0.1;
-    W_0[5+(NY0) * 5] = 0.1;
-    W_0[6+(NY0) * 6] = 0.1;
-    W_0[7+(NY0) * 7] = 0.1;
+    W_0[4+(NY0) * 4] = 1;
+    W_0[5+(NY0) * 5] = 1;
+    W_0[6+(NY0) * 6] = 1;
+    W_0[7+(NY0) * 7] = 1;
     ocp_nlp_cost_model_set(nlp_config, nlp_dims, nlp_in, 0, "W", W_0);
     free(W_0);
     double* Vx_0 = calloc(NY0*NX, sizeof(double));
@@ -448,10 +448,10 @@ void tracking_mpc_acados_setup_nlp_in(tracking_mpc_solver_capsule* capsule, cons
     W[1+(NY) * 1] = 1;
     W[2+(NY) * 2] = 1;
     W[3+(NY) * 3] = 1;
-    W[4+(NY) * 4] = 0.1;
-    W[5+(NY) * 5] = 0.1;
-    W[6+(NY) * 6] = 0.1;
-    W[7+(NY) * 7] = 0.1;
+    W[4+(NY) * 4] = 1;
+    W[5+(NY) * 5] = 1;
+    W[6+(NY) * 6] = 1;
+    W[7+(NY) * 7] = 1;
 
     for (int i = 1; i < N; i++)
     {
