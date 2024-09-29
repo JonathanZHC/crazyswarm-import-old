@@ -91,7 +91,7 @@ if __name__ == "__main__":
                     data_index_c_vel,
                     DataVarIndex.ROLL,
                     DataVarIndex.PITCH, 
-                    DataVarIndex.YAW,                   
+                    #DataVarIndex.YAW,                   
                     DataVarIndex.CMD_THRUST,
                     #DataVarIndex.ROLL_RATE,
                     #DataVarIndex.YAW_RATE,
