@@ -236,7 +236,7 @@ class Plotter:
         
 
 if __name__ == "__main__":
-    wandb_project = "test" # tac-cbf
+    wandb_project = "tac-cbf" # tac-cbf
     # Specify the indices to be plotted
     plot_indices = None
     # Specify the data by setting either the run_name or the file_name

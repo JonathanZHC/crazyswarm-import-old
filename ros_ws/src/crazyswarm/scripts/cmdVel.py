@@ -13,7 +13,7 @@ from pycrazyswarm import *
 from position_ctl_m import PositionController
 from quadrotor import quadrotor
 from helper import quat2euler, rad2deg, deg2rad
-from trajectory_generator import TrajectoryGenerator2DPeriodicMotion, TrajectoryGenerator3DPeriodicMotion
+from trajectory_generator import TrajectoryGenerator3DPeriodicMotion
 from crazyswarm.msg import StateVector, Command
 from geometry_msgs.msg import TransformStamped
 from utils import DataVarIndex, Status
@@ -162,13 +162,14 @@ class QuadMotion:
         self.delta_t_sum_ave = 0
         self.delta_t_sum_var = 0
         "----------for test----------"
-
+        
         # Define counter parameter for gradually starting
         self.grad_start = grad_start
         if self.grad_start:
             self.track_traj_counter = 0 # set value = 0 to switch on
         else:
             self.track_traj_counter = 31 # set value >= 31 to switch off
+        
 
 
     def log_data_init(self):
@@ -232,7 +233,7 @@ class QuadMotion:
 
     '''basic behavior'''
 
-    def pos_control(self, pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr, status):
+    def pos_control(self, pos, rpy, vel, target_pos_arr, target_vel_arr, target_rpy_arr, target_thrust_arr, status):
         """ Position control of the drone.
 
         Args:
@@ -266,7 +267,7 @@ class QuadMotion:
 
 
 
-        pwm, euler, state_predicted = self.posCtrl.compute_action(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr)
+        pwm, euler, state_predicted = self.posCtrl.compute_action(pos, rpy, vel, target_pos_arr, target_vel_arr, target_rpy_arr, target_thrust_arr)
 
         t = time.time() 
         # Update the command data to be published
@@ -321,7 +322,9 @@ class QuadMotion:
             data[DataVarIndex.DES_POS_X] = target_pos_arr[0, 0]
             data[DataVarIndex.DES_POS_Y] = target_pos_arr[0, 1]
             data[DataVarIndex.DES_POS_Z] = target_pos_arr[0, 2]
-            data[DataVarIndex.DES_YAW] = float(target_yaw_arr[0])  # make target_yaw a float
+            data[DataVarIndex.DES_ROLL] = float(target_rpy_arr[0, 0])  # make target_roll a float
+            data[DataVarIndex.DES_PITCH] = float(target_rpy_arr[0, 1])  # make target_pitch a float
+            data[DataVarIndex.DES_YAW] = float(target_rpy_arr[0, 2])  # make target_yaw a float
             data[DataVarIndex.DES_VEL_X] = target_vel_arr[0, 0]
             data[DataVarIndex.DES_VEL_Y] = target_vel_arr[0, 1]
             data[DataVarIndex.DES_VEL_Z] = target_vel_arr[0, 2]
@@ -401,7 +404,7 @@ class QuadMotion:
 
     '''lower level behavior'''
 
-    def vertical(self, velocity=0.3, height=0.5, target_yaw_deg=0.0, status=Status.VERTICAL):
+    def vertical(self, velocity=0.3, height=0.5, target_rpy_deg=np.array([0.0, 0.0, 0.0]), target_thrust_force=0.0, status=Status.VERTICAL):
         """ Move the drone vertically up or down.
         
         Args:
@@ -417,8 +420,10 @@ class QuadMotion:
         delta_height = (height - init_pos[2]) / num_steps
         target_vel = np.array([0.0, 0.0, delta_height / self.dt])
         target_vel_arr = np.tile(target_vel, (self.MPC_N + 1, 1))
-        target_yaw = deg2rad(target_yaw_deg)
-        target_yaw_arr = np.tile(target_yaw, (self.MPC_N + 1, 1))
+        target_rpy = deg2rad(target_rpy_deg)
+        target_rpy_arr = np.tile(target_rpy, (self.MPC_N + 1, 1))
+        target_thrust_arr = np.tile(target_thrust_force, (self.MPC_N + 1, 1))
+
 
         for i in range(num_steps): # openloop control
             rpy = self.state_estimator.rpy
@@ -426,9 +431,9 @@ class QuadMotion:
             vel = self.state_estimator.vel
             target_pos = init_pos + np.array([0.0, 0.0, i * delta_height])
             target_pos_arr = np.tile(target_pos, (self.MPC_N + 1, 1))
-            self.pos_control(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr, status=status)
+            self.pos_control(pos, rpy, vel, target_pos_arr, target_vel_arr, target_rpy_arr, target_thrust_arr, status=status)
 
-    def horizontal(self, velocity=0.3, target_x=0.0, target_y=0.0, target_yaw_deg=0.0, status=Status.HORIZONTAL):
+    def horizontal(self, velocity=0.3, target_x=0.0, target_y=0.0, target_rpy_deg=np.array([0.0, 0.0, 0.0]), target_thrust_force=0.0, status=Status.HORIZONTAL):
         """ Move the drone horizontally in the x-y plane.
         
         Args:
@@ -449,8 +454,9 @@ class QuadMotion:
             delta_y = (target_y - init_pos[1]) / num_steps
             target_vel = np.array([delta_x / self.dt, delta_y / self.dt, 0.0])
             target_vel_arr = np.tile(target_vel, (self.MPC_N + 1, 1))
-            target_yaw = deg2rad(target_yaw_deg)
-            target_yaw_arr = np.tile(target_yaw, (self.MPC_N + 1, 1))
+            target_rpy = deg2rad(target_rpy_deg)
+            target_rpy_arr = np.tile(target_rpy, (self.MPC_N + 1, 1))
+            target_thrust_arr = np.tile(target_thrust_force, (self.MPC_N + 1, 1))
 
             for i in range(num_steps):
                 rpy = self.state_estimator.rpy
@@ -459,9 +465,9 @@ class QuadMotion:
                 target_pos = init_pos + np.array([i * delta_x, i * delta_y, 0.0])
                 target_pos_arr = np.tile(target_pos, (self.MPC_N + 1, 1))
 
-                self.pos_control(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr, status=status)
+                self.pos_control(pos, rpy, vel, target_pos_arr, target_vel_arr, target_rpy_arr, target_thrust_arr, status=status)
 
-    def interpolate_vel(self, duration=2.0, target_vel=np.array([0.0, 0.0, 0.0]), target_yaw_deg=0.0, status=Status.INTERPOLATE):
+    def interpolate_vel(self, duration=2.0, target_vel=np.array([0.0, 0.0, 0.0]), target_rpy_deg=np.array([0.0, 0.0, 0.0]), target_thrust_force=0.0, status=Status.INTERPOLATE):
         """ Interpolate the velocity of the drone.
         
         Args:
@@ -472,7 +478,8 @@ class QuadMotion:
             
         """
         num_steps = int(duration * self.control_freq)
-        target_yaw = deg2rad(target_yaw_deg)
+        target_rpy = deg2rad(target_rpy_deg)
+        target_thrust_arr = np.tile(target_thrust_force, (self.MPC_N + 1, 1))
 
         for i in range(num_steps):
             alpha = i / num_steps
@@ -481,14 +488,14 @@ class QuadMotion:
             vel = self.state_estimator.vel
             vel_i = alpha * target_vel + (1 - alpha) * vel # interpolation of velocity
             vel_i_arr = np.tile(vel_i, (self.MPC_N + 1, 1))
-            yaw_i = alpha * target_yaw + (1 - alpha) * rpy[2] # interpolation of yaw angle
-            yaw_i_arr = np.tile(yaw_i, (self.MPC_N + 1, 1))
+            rpy_i = alpha * target_rpy + (1 - alpha) * rpy # interpolation of euler angle
+            rpy_i_arr = np.tile(rpy_i, (self.MPC_N + 1, 1))
             pos_i = pos + vel_i * self.dt
             pos_i_arr = np.tile(pos_i, (self.MPC_N + 1, 1))
 
-            self.pos_control(pos, rpy, vel, pos_i_arr, vel_i_arr, yaw_i_arr, status=status)
+            self.pos_control(pos, rpy, vel, pos_i_arr, vel_i_arr, rpy_i_arr, target_thrust_arr, status=status)
 
-    def hover(self, duration=2.0, target_yaw_deg=0.0, status=Status.HOVER):
+    def hover(self, duration=2.0, target_rpy_deg=np.array([0.0, 0.0, 0.0]), target_thrust_force=0.0, status=Status.HOVER):
         """ Hover the drone at the current position.
         
         Args:
@@ -502,14 +509,17 @@ class QuadMotion:
         target_vel = np.zeros(3,)
         target_vel_arr = np.tile(target_vel, (self.MPC_N + 1, 1))
         num_steps = int(duration * self.control_freq)
-        target_yaw = deg2rad(target_yaw_deg)
-        target_yaw_arr = np.tile(target_yaw, (self.MPC_N + 1, 1))
+        target_rpy = deg2rad(target_rpy_deg)
+        target_rpy_arr = np.tile(target_rpy, (self.MPC_N + 1, 1))
+        target_thrust_arr = np.tile(target_thrust_force, (self.MPC_N + 1, 1))
 
         for i in range(num_steps):
             rpy = self.state_estimator.rpy
             pos = self.state_estimator.pos
             vel = self.state_estimator.vel
-            self.pos_control(pos, rpy, vel, init_pos_arr, target_vel_arr, target_yaw_arr, status=status)
+            self.pos_control(pos, rpy, vel, init_pos_arr, target_vel_arr, target_rpy_arr, target_thrust_arr, status=status)
+
+
 
     '''higher level behavior'''
 
@@ -522,9 +532,9 @@ class QuadMotion:
             
         """
         self.idle()
-        self.hover(hover_duration, target_yaw_deg, status=Status.STATIC_OBSV)
+        self.hover(hover_duration, status=Status.STATIC_OBSV)
 
-    def take_off(self, velocity, height, target_yaw_deg=0.0, interpolation_duration=1.0, hover_duration=2.0):
+    def take_off(self, velocity, height, target_rpy_deg=np.array([0.0, 0.0, 0.0]), interpolation_duration=1.0, hover_duration=2.0):
         """ Take off the drone to a certain height.
         
         Args: 
@@ -536,18 +546,18 @@ class QuadMotion:
         # Take off
         # Period 1: acceleration
         target_vel = np.array([0.0, 0.0, velocity])
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.TAKEOFF)
+        self.interpolate_vel(interpolation_duration, target_vel, target_rpy_deg, status=Status.TAKEOFF)
         # Period 2: uniform rectilinear motion
         target_height = height - velocity * interpolation_duration / 2
-        self.vertical(velocity, target_height, target_yaw_deg, status=Status.TAKEOFF)
+        self.vertical(velocity, target_height, target_rpy_deg, status=Status.TAKEOFF)
         # Period 3: deceleration
         target_vel = np.zeros(3,)
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.TAKEOFF)
+        self.interpolate_vel(interpolation_duration, target_vel, target_rpy_deg, status=Status.TAKEOFF)
 
         # Hover
-        self.hover(hover_duration, target_yaw_deg, status=Status.TAKEOFF)
+        self.hover(hover_duration, target_rpy_deg, status=Status.TAKEOFF)
 
-    def land(self, velocity, height=0.03, target_yaw_deg=0.0, interpolation_duration=1.0, hover_duration=2.0):
+    def land(self, velocity, height=0.03, target_rpy_deg=np.array([0.0, 0.0, 0.0]), interpolation_duration=1.0, hover_duration=2.0):
         """ Land the drone to a certain height.
 
         Args:
@@ -567,42 +577,42 @@ class QuadMotion:
         # Period 2: uniform rectilinear motion
         target_x = - vel_x * interpolation_duration / 2
         target_y = - vel_y * interpolation_duration / 2
-        self.horizontal(velocity_t, target_x, target_y, target_yaw_deg, status=Status.LAND)
+        self.horizontal(velocity_t, target_x, target_y, target_rpy_deg, status=Status.LAND)
         # Period 3: deceleration
         target_vel = np.zeros(3,)
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND)
+        self.interpolate_vel(interpolation_duration, target_vel, target_rpy_deg, status=Status.LAND)
         
         # Hover
-        self.hover(hover_duration, target_yaw_deg, status=Status.LAND)
+        self.hover(hover_duration, target_rpy_deg, status=Status.LAND)
 
         # Then go back to the origin
         # Period 1: acceleration
         target_vel = np.array([0.0, 0.0, -velocity])
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.LAND)
+        self.interpolate_vel(interpolation_duration, target_vel, target_rpy_deg, status=Status.LAND)
         # Period 2: uniform rectilinear motion to the origin
-        self.vertical(velocity, height, target_yaw_deg, status=Status.LAND)
+        self.vertical(velocity, height, target_rpy_deg, status=Status.LAND)
 
         self.cf.cmdStop()
 
     def track_traj(self, traj: TrajectoryGenerator3DPeriodicMotion): 
         """ Track the trajectory generated by the trajectory generator.
         
-        Args: traj (TrajectoryGenerator2DPeriodicMotion / TrajectoryGenerator3DPeriodicMotion): trajectory generator object.
+        Args: traj (TrajectoryGenerator3DPeriodicMotion): trajectory generator object.
     
         """
 
         # Use linear smoothing between the current velocity and the desired velocity at the beginning of the trajectory
-        target_pos, target_vel, target_yaw_rad = traj.get_coordinates(0)
+        _, target_vel, target_rpy_rad, _ = traj.get_coordinates(0)
         interpolation_duration = 1.0
-        target_yaw_deg = rad2deg(target_yaw_rad)
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.INTERPOLATE)
+        target_rpy_deg = rad2deg(target_rpy_rad)
+        self.interpolate_vel(interpolation_duration, target_vel, target_rpy_deg, status=Status.INTERPOLATE)
 
         rpy = self.state_estimator.rpy
         pos = self.state_estimator.pos
         vel = self.state_estimator.vel
 
         # Reset the offset of the trajectory to match the current position
-        init_target_pos, _, _ = traj.get_coordinates(0)
+        init_target_pos, _, _, _ = traj.get_coordinates(0)
         offset = pos - init_target_pos
         traj.reset_offset(offset.tolist())
 
@@ -630,34 +640,42 @@ class QuadMotion:
             else:
                 time_traj = self.timeHelper.time() - startTime
                 looping_condition = time_traj <= traj.traj_length
+            
 
             # Update counter for gradually starting
             self.track_traj_counter += 1
 
+
             time_arr = np.arange(time_traj, time_traj + (self.MPC_N + 1) * self.dt, self.dt)
             target_pos_arr = np.zeros((self.MPC_N + 1, 3))
             target_vel_arr = np.zeros((self.MPC_N + 1, 3))
-            target_yaw_arr = np.zeros((self.MPC_N + 1, 1))
-            
+            target_rpy_arr = np.zeros((self.MPC_N + 1, 3))
+            target_thrust_arr = np.zeros((self.MPC_N + 1, 1))
+
             for i in range(self.MPC_N + 1):
                 if i < self.track_traj_counter:
-                    pos_ref, vel_ref, yaw_ref = traj.get_coordinates(time_arr[i])
+                    pos_ref, vel_ref, rpy_ref, thrust_ref = traj.get_coordinates(time_arr[i])
                     target_pos_arr[i, :] = pos_ref.T
                     target_vel_arr[i, :] = vel_ref.T
-                    target_yaw_arr[i, :] = yaw_ref
+                    target_rpy_arr[i, :] = rpy_ref.T
+                    target_thrust_arr[i, :] = thrust_ref
                 else: 
                     # Use gradually starting at initial stage of track_traj
                     target_pos_arr[i, :] = target_pos_arr[i-1, :]
                     target_vel_arr[i, :] = target_vel_arr[i-1, :]
-                    target_yaw_arr[i, :] = target_yaw_arr[i-1, :]
+                    target_rpy_arr[i, :] = target_rpy_arr[i-1, :]
+                    target_thrust_arr[i, :] = target_thrust_arr[i-1, :]
+
             
-            self.pos_control(pos, rpy, vel, target_pos_arr, target_vel_arr, target_yaw_arr, status=Status.TRACK_TRAJ)
+            self.pos_control(pos, rpy, vel, target_pos_arr, target_vel_arr, target_rpy_arr, target_thrust_arr, status=Status.TRACK_TRAJ)
 
         # Use linear smoothing between the end of the trajectory and hovering
         target_vel = np.zeros(3,)
         interpolation_duration = 1.0
-        target_yaw_deg = 0.0
-        self.interpolate_vel(interpolation_duration, target_vel, target_yaw_deg, status=Status.INTERPOLATE)
+        target_rpy_deg=np.array([0.0, 0.0, 0.0])
+        self.interpolate_vel(interpolation_duration, target_vel, target_rpy_deg, status=Status.INTERPOLATE)
+        hover_duration = 1.0
+        self.hover(hover_duration, target_rpy_deg, status=Status.LAND)
 
 
 if __name__ == "__main__":
@@ -699,8 +717,8 @@ if __name__ == "__main__":
     print("Data will be saved to: ", file_path)
     control_freq = 60.0
     grad_start = True
-    quad_motion = QuadMotion(state_estimator, control_freq=control_freq, vicon=vicon, 
-                             verbose=True, log_data=True, filename=file_path, grad_start=grad_start)
+    quad_motion = QuadMotion(state_estimator, vicon=vicon, control_freq=control_freq,  grad_start=grad_start, 
+                             verbose=True, log_data=True, filename=file_path)
 
     # Set parameters
     traj_type = "figure8"  # Trajectory type {"circle", "square", "figure8"}
@@ -736,14 +754,13 @@ if __name__ == "__main__":
     
     velocity = 0.3
     height = 0.7 # 1.5 for Trajectory 4
-    target_yaw_deg = 0.0
     observation_duration = 2.0
 
     # Static observation stage, especially for KF
     quad_motion.static_observation(observation_duration)
 
     # Take off
-    quad_motion.take_off(velocity, height, target_yaw_deg)
+    quad_motion.take_off(velocity, height)
 
     # Track trajectory
     quad_motion.track_traj(traj)
