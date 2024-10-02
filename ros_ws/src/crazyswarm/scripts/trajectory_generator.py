@@ -200,15 +200,31 @@ class TrajectoryGenerator3DPeriodicMotion():
         coords_b_dot_dot = 3 * self.scaling * self.traj_freq**2 * np.cos(self.traj_freq * t) * (2 - 3 * (np.cos(self.traj_freq * t))**2)
         coords_c_dot_dot = -2 * self.scaling * self.traj_freq**2 * np.sin(2 * self.traj_freq * t)
         '''
-
-        # Calculate pose of trajectory (unit: rad)
-        # Assumption: yaw == 0
-        roll = np.arcsin(- coords_b_dot_dot / np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]))
-        pitch = np.arcsin(coords_a_dot_dot / (np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]) * np.cos(roll)))
-        yaw = 0
         
-        # Calculate command of thrust (unit: N)
-        thrust = (np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]) - self.params_acc[1]) / self.params_acc[0]
+
+       '------input reference------'
+
+        # Methode 1: Calculate accurate input reference
+        #         +: will lead to no-deviation tracking
+        #         -: need analytic expression of trajectory known adn the reference need to be 2-order differentiable
+        # Assumption: 1) reference trajectory is 2-order differentiable; 
+        #             2) analytic expression of trajectory known; 
+        #             3) yaw == 0;
+        # Part 1: Calculate pose of trajectory (unit: rad)
+        #roll = 0 #np.arcsin(- coords_b_dot_dot / np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]))
+        #pitch = 0 #np.arcsin(coords_a_dot_dot / (np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]) * np.cos(roll)))
+        #yaw = 0
+        # Part 2: Calculate command of thrust (unit: N)
+        #thrust = (np.linalg.norm([coords_a_dot_dot, coords_b_dot_dot, coords_c_dot_dot + self.GRAVITY]) - self.params_acc[1]) / self.params_acc[0]
+
+        # Method 2: Set a rough estimation as input reference
+        #         +: no additional request on reference trajectory
+        #         -: lower tracking accurancy
+        roll = 0 
+        pitch = 0 
+        yaw = 0
+        thrust = (self.GRAVITY - self.params_acc[1]) / self.params_acc[0] # use hover thrust as estimation: thrust_collective = m * g
+        
 
         return coords_a, coords_b, coords_c, coords_a_dot, coords_b_dot, coords_c_dot, roll, pitch, yaw, thrust
 
